@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>雲端音樂搜尋播放器</title>
+  <title>雲端音樂播放與分享</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background: #0f111a;
+      background: #12131a;
       color: #fff;
       display: flex;
       flex-direction: column;
@@ -18,232 +18,260 @@
     }
     .container {
       width: 100%;
-      max-width: 480px;
+      max-width: 440px;
       display: flex;
       flex-direction: column;
-      gap: 16px;
+      gap: 18px;
     }
-    /* 播放器卡片 */
+    /* 播放器大卡片 */
     .player-card {
-      background: #1a1d2e;
+      background: #1e202d;
       border-radius: 16px;
-      padding: 20px;
-      box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+      padding: 24px;
       text-align: center;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      border: 1px solid #2d3145;
     }
     .cover-img {
-      width: 140px;
-      height: 140px;
-      border-radius: 12px;
+      width: 160px;
+      height: 160px;
+      border-radius: 14px;
       object-fit: cover;
-      margin-bottom: 12px;
-      background: #282c40;
+      margin: 0 auto 16px;
+      display: block;
+      background: #2b2f45;
     }
     .track-title {
-      font-size: 1.15rem;
-      font-weight: 600;
+      font-size: 1.2rem;
+      font-weight: bold;
+      margin-bottom: 6px;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
     }
     .track-artist {
       font-size: 0.9rem;
-      color: #9499b3;
-      margin-top: 4px;
-      margin-bottom: 14px;
+      color: #9aa1bc;
+      margin-bottom: 18px;
     }
     audio {
       width: 100%;
-      height: 40px;
-      margin-bottom: 10px;
+      height: 44px;
+      margin-bottom: 16px;
+      outline: none;
     }
-    .btn-share {
+    /* 超顯眼的分享大按鈕 */
+    .share-btn {
       width: 100%;
-      background: #2b304c;
-      border: 1px solid #41476b;
-      color: #fff;
-      padding: 10px;
-      border-radius: 8px;
+      background: #6366f1;
+      color: #ffffff;
+      border: none;
+      padding: 13px 20px;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-weight: bold;
       cursor: pointer;
-      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 4px 14px rgba(99, 102, 241, 0.4);
       transition: background 0.2s;
     }
-    .btn-share:hover { background: #3b4269; }
+    .share-btn:hover {
+      background: #4f46e5;
+    }
+    /* 提示訊息 */
+    .toast {
+      margin-top: 10px;
+      font-size: 0.85rem;
+      color: #4ade80;
+      min-height: 20px;
+    }
 
-    /* 搜尋欄位 */
+    /* 搜尋欄 */
     .search-box {
       display: flex;
       gap: 8px;
     }
     .search-box input {
       flex: 1;
-      padding: 12px 16px;
-      background: #1a1d2e;
-      border: 1px solid #2b304c;
+      padding: 12px 14px;
+      background: #1e202d;
+      border: 1px solid #2d3145;
       border-radius: 10px;
       color: #fff;
       font-size: 0.95rem;
       outline: none;
     }
-    .search-box input:focus { border-color: #6366f1; }
+    .search-box input:focus {
+      border-color: #6366f1;
+    }
     .search-box button {
       background: #6366f1;
       color: #fff;
       border: none;
-      padding: 0 18px;
+      padding: 0 20px;
       border-radius: 10px;
       cursor: pointer;
-      font-weight: 600;
+      font-weight: bold;
+      font-size: 0.95rem;
     }
 
     /* 搜尋結果列表 */
     .result-list {
-      background: #1a1d2e;
-      border-radius: 16px;
-      padding: 12px;
+      background: #1e202d;
+      border-radius: 14px;
+      padding: 10px;
+      border: 1px solid #2d3145;
+      max-height: 320px;
+      overflow-y: auto;
       display: flex;
       flex-direction: column;
       gap: 8px;
-      max-height: 380px;
-      overflow-y: auto;
     }
     .result-item {
       display: flex;
       align-items: center;
       gap: 12px;
       padding: 10px;
-      border-radius: 10px;
+      border-radius: 8px;
       cursor: pointer;
       transition: background 0.2s;
     }
-    .result-item:hover { background: #252a42; }
+    .result-item:hover {
+      background: #2b2f45;
+    }
     .thumb {
-      width: 46px;
-      height: 46px;
+      width: 44px;
+      height: 44px;
       border-radius: 6px;
       object-fit: cover;
-      background: #2e3452;
+      background: #2b2f45;
     }
     .info {
       flex: 1;
       min-width: 0;
+      text-align: left;
     }
     .info .name {
       font-size: 0.9rem;
-      font-weight: 500;
+      font-weight: 600;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
     }
     .info .artist {
       font-size: 0.8rem;
-      color: #8c92ad;
+      color: #9aa1bc;
+      margin-top: 2px;
     }
-    .status-msg {
+    .empty-tip {
       text-align: center;
-      color: #8c92ad;
+      color: #7b819c;
       font-size: 0.85rem;
-      padding: 16px;
+      padding: 18px;
     }
   </style>
 </head>
 <body>
 
   <div class="container">
-    <!-- 播放器區塊 -->
+    <!-- 上方：主播放器 -->
     <div class="player-card">
-      <img id="cover" class="cover-img" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Crect width='100%25' height='100%25' fill='%23282c40'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-size='32' fill='%23666'%3E🎵%3C/text%3E%3C/svg%3E" alt="Cover" />
-      <div id="trackTitle" class="track-title">請搜尋並選擇歌曲</div>
-      <div id="trackArtist" class="track-artist">探索獨立音樂與全球創作者</div>
-      
-      <!-- 原生 audio：離開視窗/最小化照樣播 -->
+      <img id="cover" class="cover-img" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Crect width='100%25' height='100%25' fill='%232b2f45'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-size='40' fill='%23666'%3E🎵%3C/text%3E%3C/svg%3E" alt="Cover" />
+      <div id="trackTitle" class="track-title">請在下方搜尋並選擇歌曲</div>
+      <div id="trackArtist" class="track-artist">支援切換分頁／最小化背景播放</div>
+
+      <!-- 原生播放器 -->
       <audio id="audioPlayer" controls></audio>
-      
-      <button class="btn-share" onclick="copyShareLink()">🔗 複製此歌曲分享連結</button>
+
+      <!-- 核心：分享按鈕 -->
+      <button class="share-btn" onclick="copyShareLink()">
+        <span>🔗</span>
+        <span>複製分享連結（含目前播放進度）</span>
+      </button>
+      <div id="toast" class="toast"></div>
     </div>
 
-    <!-- 搜尋列 -->
+    <!-- 中間：搜尋欄 -->
     <div class="search-box">
-      <input type="text" id="searchInput" placeholder="搜尋歌曲名稱、歌手或關鍵字..." onkeydown="if(event.key==='Enter') searchMusic()" />
+      <input type="text" id="searchInput" placeholder="輸入歌名、歌手或關鍵字 (例如 lofi)" onkeydown="if(event.key==='Enter') searchMusic()" />
       <button onclick="searchMusic()">搜尋</button>
     </div>
 
-    <!-- 搜尋結果清單 -->
+    <!-- 下方：搜尋結果 -->
     <div class="result-list" id="resultList">
-      <div class="status-msg">輸入關鍵字後按下搜尋</div>
+      <div class="empty-tip">在上方輸入關鍵字後點擊「搜尋」</div>
     </div>
   </div>
 
   <script>
-    const APP_NAME = "MyWebPlayer_Albert";
-    const searchInput = document.getElementById("searchInput");
-    const resultList = document.getElementById("resultList");
+    const APP_NAME = "AlbertFanPlayer";
     const audioPlayer = document.getElementById("audioPlayer");
     const trackTitle = document.getElementById("trackTitle");
     const trackArtist = document.getElementById("trackArtist");
     const cover = document.getElementById("cover");
+    const searchInput = document.getElementById("searchInput");
+    const resultList = document.getElementById("resultList");
+    const toast = document.getElementById("toast");
 
     let currentTrack = null;
-    let selectedHost = "https://discoveryprovider.audius.co"; // 預設節點
+    let selectedHost = "https://discoveryprovider.audius.co";
 
-    // 取得健康的 Audius API 節點
+    // 取得 Audius 節點
     async function initHost() {
       try {
         const res = await fetch("https://api.audius.co");
         const json = await res.json();
-        if (json.data && json.data.length > 0) {
-          selectedHost = json.data[0];
-        }
+        if (json.data && json.data.length > 0) selectedHost = json.data[0];
       } catch (e) {
-        console.warn("無法取得最新主機，使用預設節點", e);
+        console.warn("使用預設節點", e);
       }
     }
 
-    // 搜尋音樂 (支援歌名、歌手、風格)
+    // 關鍵字搜尋
     async function searchMusic() {
-      const query = searchInput.value.trim();
-      if (!query) return;
+      const q = searchInput.value.trim();
+      if (!q) return;
 
-      resultList.innerHTML = `<div class="status-msg">正在搜尋「${query}」...</div>`;
+      resultList.innerHTML = `<div class="empty-tip">正在搜尋「${q}」...</div>`;
 
       try {
-        const url = `${selectedHost}/v1/tracks/search?query=${encodeURIComponent(query)}&app_name=${APP_NAME}`;
-        const res = await fetch(url);
+        const res = await fetch(`${selectedHost}/v1/tracks/search?query=${encodeURIComponent(q)}&app_name=${APP_NAME}`);
         const data = await res.json();
         renderResults(data.data || []);
-      } catch (err) {
-        resultList.innerHTML = `<div class="status-msg">搜尋失敗，請稍候重試</div>`;
+      } catch (e) {
+        resultList.innerHTML = `<div class="empty-tip">搜尋失敗，請再試一次</div>`;
       }
     }
 
-    // 渲染搜尋清單
+    // 渲染搜尋結果清單
     function renderResults(tracks) {
-      if (tracks.length === 0) {
-        resultList.innerHTML = `<div class="status-msg">找不到相符的歌曲</div>`;
+      if (!tracks || tracks.length === 0) {
+        resultList.innerHTML = `<div class="empty-tip">找不到相符的歌曲</div>`;
         return;
       }
-
       resultList.innerHTML = "";
       tracks.forEach(track => {
         const item = document.createElement("div");
         item.className = "result-item";
-        const imgUrl = track.artwork ? track.artwork["150x150"] : "";
+        const thumbUrl = track.artwork ? track.artwork["150x150"] : "";
 
         item.innerHTML = `
-          <img class="thumb" src="${imgUrl || 'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'46\' height=\'46\'%3E%3Crect width=\'100%25\' height=\'100%25\' fill=\'%23282c40\'/%3E%3C/svg%3E'}" />
+          <img class="thumb" src="${thumbUrl || 'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'44\' height=\'44\'%3E%3Crect width=\'100%25\' height=\'100%25\' fill=\'%232b2f45\'/%3E%3C/svg%3E'}" />
           <div class="info">
             <div class="name">${escapeHtml(track.title)}</div>
             <div class="artist">${escapeHtml(track.user ? track.user.name : "未知歌手")}</div>
           </div>
         `;
-
-        item.onclick = () => playTrack(track);
+        item.onclick = () => playTrack(track, 0);
         resultList.appendChild(item);
       });
     }
 
     // 播放指定歌曲
-    function playTrack(track) {
+    function playTrack(track, startTime = 0) {
       currentTrack = track;
       trackTitle.innerText = track.title;
       trackArtist.innerText = track.user ? track.user.name : "未知歌手";
@@ -252,12 +280,18 @@
         cover.src = track.artwork["480x480"];
       }
 
-      // 串流原生 MP3 音訊（支援背景切視窗播放）
-      const streamUrl = `${selectedHost}/v1/tracks/${track.id}/stream?app_name=${APP_NAME}`;
-      audioPlayer.src = streamUrl;
-      audioPlayer.play();
+      audioPlayer.src = `${selectedHost}/v1/tracks/${track.id}/stream?app_name=${APP_NAME}`;
+      
+      // 設定起始播放時間點
+      if (startTime > 0) {
+        audioPlayer.currentTime = startTime;
+      }
 
-      // 整合系統 Media Session (桌面/鎖屏控制列)
+      audioPlayer.play().catch(() => {
+        // 避免瀏覽器限制阻擋
+      });
+
+      // 支援系統控制通知列 (桌面/鎖屏)
       if ('mediaSession' in navigator) {
         navigator.mediaSession.metadata = new MediaMetadata({
           title: track.title,
@@ -267,31 +301,50 @@
       }
     }
 
-    // 複製分享連結
+    // ⭐ 核心功能：複製分享連結 ⭐
     function copyShareLink() {
       if (!currentTrack) {
-        alert("請先選取一首歌曲播放！");
+        alert("請先從下方搜尋並點選一首歌播放！");
         return;
       }
-      const shareUrl = `${window.location.origin}${window.location.pathname}?track=${currentTrack.id}`;
+
+      // 取得目前播放的秒數（取整數）
+      const currentSec = Math.floor(audioPlayer.currentTime);
+
+      // 組合成包含歌曲 ID 與時間點的網址
+      const shareUrl = `${window.location.origin}${window.location.pathname}?track=${currentTrack.id}&t=${currentSec}`;
+
+      // 寫入剪貼簿
       navigator.clipboard.writeText(shareUrl).then(() => {
-        alert("已複製分享連結！朋友開啟後會直接播放這首歌。");
+        toast.innerText = `✅ 已複製！朋友點開會直接從 ${formatTime(currentSec)} 開始播放`;
+        setTimeout(() => { toast.innerText = ""; }, 4000);
+      }).catch(() => {
+        prompt("請手動複製下方分享網址：", shareUrl);
       });
     }
 
-    // 檢查網址有沒有自帶 ?track=xxx 分享參數
-    async function checkShareUrl() {
+    // 解析秒數為 mm:ss 格式
+    function formatTime(seconds) {
+      const m = Math.floor(seconds / 60);
+      const s = seconds % 60;
+      return `${m}:${s < 10 ? '0' : ''}${s}`;
+    }
+
+    // 檢查網址有沒有帶分享參數 (?track=xxx&t=yyy)
+    async function checkShareParam() {
       const params = new URLSearchParams(window.location.search);
       const trackId = params.get("track");
+      const startTime = parseFloat(params.get("t")) || 0;
+
       if (trackId) {
         try {
           const res = await fetch(`${selectedHost}/v1/tracks/${trackId}?app_name=${APP_NAME}`);
           const json = await res.json();
           if (json.data) {
-            playTrack(json.data);
+            playTrack(json.data, startTime);
           }
         } catch (e) {
-          console.warn("無法載入分享歌曲", e);
+          console.warn("無法取得分享曲目", e);
         }
       }
     }
@@ -302,9 +355,9 @@
       }[m]));
     }
 
-    // 啟動初始化
+    // 啟動
     initHost().then(() => {
-      checkShareUrl();
+      checkShareParam();
     });
   </script>
 </body>
