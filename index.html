@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SoundCloud 串流分享播放器</title>
+  <script src="https://w.soundcloud.com/player/api.js"></script>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #121214;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+    .player-box {
+      background: #1e1e24;
+      padding: 24px;
+      border-radius: 12px;
+      width: 100%;
+      max-width: 420px;
+      text-align: center;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    }
+    h3 {
+      margin-top: 0;
+      margin-bottom: 16px;
+    }
+    input {
+      width: 100%;
+      padding: 10px 12px;
+      margin-bottom: 12px;
+      border-radius: 6px;
+      border: 1px solid #333;
+      background: #2b2b36;
+      color: #fff;
+      box-sizing: border-box;
+      font-size: 0.9rem;
+    }
+    button {
+      background: #ff5500;
+      color: #fff;
+      border: none;
+      padding: 10px 18px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+      width: 100%;
+      margin-bottom: 8px;
+      font-size: 0.95rem;
+      transition: opacity 0.2s;
+    }
+    button:hover {
+      opacity: 0.9;
+    }
+    .btn-share {
+      background: #2f2f3d;
+    }
+    iframe {
+      width: 100%;
+      height: 166px;
+      border: none;
+      border-radius: 8px;
+      margin-top: 15px;
+    }
+    .hint {
+      margin-top: 14px;
+      font-size: 0.8rem;
+      color: #888;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="player-box">
+    <h3>🎵 串流音樂播放器</h3>
+    <input type="text" id="trackUrl" placeholder="貼上 SoundCloud 歌曲或播放清單網址" />
+    <button onclick="loadAndPlay()">載入並播放</button>
+    <button class="btn-share" onclick="copyShareLink()">🔗 複製當前歌曲分享連結</button>
+
+    <!-- SoundCloud 播放框架 -->
+    <iframe id="scWidget" allow="autoplay"
+      src="https://w.soundcloud.com/player/?url=https%3A//soundcloud.com/chaboru/lofi-hip-hop-radio&auto_play=false">
+    </iframe>
+
+    <p class="hint">切換分頁或縮小視窗仍可繼續聽歌</p>
+  </div>
+
+  <script>
+    const iframe = document.getElementById('scWidget');
+    const widget = SC.Widget(iframe);
+    const input = document.getElementById('trackUrl');
+
+    // 進入網頁時檢查有沒有帶分享參數 (?sc=網址)
+    window.addEventListener('DOMContentLoaded', () => {
+      const params = new URLSearchParams(window.location.search);
+      const sharedTrack = params.get('sc');
+      if (sharedTrack) {
+        input.value = sharedTrack;
+        widget.load(sharedTrack, { auto_play: true });
+      }
+    });
+
+    // 載入使用者輸入的歌曲
+    function loadAndPlay() {
+      const url = input.value.trim();
+      if (!url) return alert('請輸入有效的 SoundCloud 網址！');
+      widget.load(url, { auto_play: true });
+    }
+
+    // 產生並複製分享連結
+    function copyShareLink() {
+      const url = input.value.trim();
+      if (!url) return alert('請先貼上或輸入 SoundCloud 歌曲網址！');
+      const shareUrl = `${window.location.origin}${window.location.pathname}?sc=${encodeURIComponent(url)}`;
+      navigator.clipboard.writeText(shareUrl).then(() => {
+        alert('已複製分享連結！打開此連結的人會自動載入這首歌。');
+      });
+    }
+  </script>
+</body>
+</html>
