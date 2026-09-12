@@ -411,7 +411,6 @@
   </div>
 
   <script>
-    // 已經幫你綁定好的專屬 Vercel API 網址
     const API_BASE = "https://music-api-pi-blond.vercel.app/api";
 
     const audio = document.getElementById("audioPlayer");
@@ -476,9 +475,9 @@
       resultsContainer.innerHTML = `<div class="empty-state">正在尋找「${escapeHtml(q)}」...</div>`;
 
       try {
-        const res = await fetch(`${API_BASE}/cloudsearch?keywords=${encodeURIComponent(q)}&limit=20`);
+        const res = await fetch(`${API_BASE}/search?keywords=${encodeURIComponent(q)}&limit=20`);
         const json = await res.json();
-        const songs = json.result ? json.result.songs : [];
+        const songs = (json.result && json.result.songs) ? json.result.songs : [];
         renderResults(songs);
       } catch (e) {
         resultsContainer.innerHTML = `<div class="empty-state">無法連線到伺服器，請稍候再試</div>`;
@@ -494,8 +493,8 @@
       songs.forEach(s => {
         const item = document.createElement("div");
         item.className = "result-card";
-        const artists = s.ar ? s.ar.map(a => a.name).join("/") : "未知歌手";
-        const pic = s.al ? s.al.picUrl : "";
+        const artists = s.artists ? s.artists.map(a => a.name).join("/") : (s.ar ? s.ar.map(a => a.name).join("/") : "未知歌手");
+        const pic = (s.album && s.album.picUrl) ? s.album.picUrl : (s.al ? s.al.picUrl : "");
 
         item.innerHTML = `
           <img class="result-thumb" src="${pic ? pic + '?param=90y90' : ''}" loading="lazy" />
@@ -518,7 +517,7 @@
       playBtn.innerText = "⏳";
 
       try {
-        const res = await fetch(`${API_BASE}/song/url/v1?id=${id}&level=standard`);
+        const res = await fetch(`${API_BASE}/song/url?id=${id}`);
         const json = await res.json();
         const songData = json.data && json.data[0];
 
