@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>WaveSync - 音樂分享播放器</title>
+  <title>WaveSync - 全網熱門串流播放器</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -34,7 +34,7 @@
       display: flex;
       justify-content: center;
       padding: 16px;
-      padding-bottom: 96px; /* 留給底部分享列 */
+      padding-bottom: 96px;
       overflow-x: hidden;
       position: relative;
     }
@@ -93,7 +93,6 @@
       border-radius: 20px;
     }
 
-    /* 播放器核心卡片 */
     .player-card {
       background: var(--card-bg);
       backdrop-filter: blur(20px);
@@ -157,7 +156,6 @@
       color: var(--text-sub);
     }
 
-    /* 現代自訂播放進度條 */
     .progress-container {
       display: flex;
       align-items: center;
@@ -207,13 +205,8 @@
       justify-content: center;
       cursor: pointer;
       box-shadow: 0 6px 18px var(--primary-glow);
-      transition: transform 0.1s;
-    }
-    .btn-play-toggle:active {
-      transform: scale(0.92);
     }
 
-    /* 搜尋欄位 */
     .search-wrapper {
       display: flex;
       align-items: center;
@@ -234,9 +227,6 @@
       font-size: 0.92rem;
       font-family: inherit;
     }
-    .search-wrapper input::placeholder {
-      color: #64748b;
-    }
     .btn-search {
       background: linear-gradient(135deg, var(--primary), var(--accent));
       border: none;
@@ -248,7 +238,6 @@
       cursor: pointer;
     }
 
-    /* 搜尋列表 */
     .results-container {
       background: var(--card-bg);
       backdrop-filter: blur(16px);
@@ -305,7 +294,6 @@
       padding: 24px 12px;
     }
 
-    /* 手機常駐底部分享按鈕 */
     .fixed-bottom-bar {
       position: fixed;
       bottom: 0;
@@ -339,7 +327,6 @@
       box-shadow: 0 8px 24px var(--primary-glow);
     }
 
-    /* 懸浮 Toast */
     .toast-pill {
       position: fixed;
       top: 24px;
@@ -375,10 +362,9 @@
   <div class="app-container">
     <div class="header-bar">
       <div class="brand-title">WaveSync</div>
-      <div class="live-tag">切換背景播放</div>
+      <div class="live-tag">手機背景/鎖屏播放</div>
     </div>
 
-    <!-- 播放器主卡片 -->
     <div class="player-card" id="playerContainer">
       <div class="cover-wrapper">
         <img id="cover" class="cover-img" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='170' height='170'%3E%3Crect width='100%25' height='100%25' fill='%231a1d2e'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-size='48' fill='%23555'%3E🎧%3C/text%3E%3C/svg%3E" alt="Cover" />
@@ -386,39 +372,33 @@
       </div>
 
       <div class="track-meta">
-        <div id="trackTitle" class="track-title">請在下方搜尋歌曲</div>
-        <div id="trackArtist" class="track-artist">建議搜尋英文歌名、Remix 或 Lofi</div>
+        <div id="trackTitle" class="track-title">輸入熱門歌名或歌手</div>
+        <div id="trackArtist" class="track-artist">支援周杰倫、熱門排行榜搜尋</div>
       </div>
 
-      <!-- 自訂進度條 -->
       <div class="progress-container">
         <span id="currentTimeText" class="time-text">0:00</span>
         <input type="range" id="progressBar" class="progress-bar" min="0" max="100" value="0" />
         <span id="durationText" class="time-text">0:00</span>
       </div>
 
-      <!-- 播放控制按鈕 -->
       <div class="player-controls">
         <button class="btn-play-toggle" id="playBtn" onclick="togglePlay()">▶</button>
       </div>
 
-      <!-- 隱藏式原生音訊實例（負責切換背景播放） -->
       <audio id="audioPlayer" preload="auto"></audio>
     </div>
 
-    <!-- 搜尋欄 -->
     <div class="search-wrapper">
-      <input type="text" id="searchInput" placeholder="搜尋歌曲、歌手（如 lofi, remix）" onkeydown="if(event.key==='Enter') searchMusic()" />
+      <input type="text" id="searchInput" placeholder="搜尋全網歌曲（例如：周杰倫 晴天）" onkeydown="if(event.key==='Enter') searchMusic()" />
       <button class="btn-search" onclick="searchMusic()">搜尋</button>
     </div>
 
-    <!-- 搜尋結果 -->
     <div class="results-container" id="resultsContainer">
-      <div class="empty-state">💡 提示：熱門華語版權歌可能無法串流，建議試試 Remix、Cover 或歐美流行/Lofi。</div>
+      <div class="empty-state">輸入熱門歌名後點擊「搜尋」</div>
     </div>
   </div>
 
-  <!-- 常駐底部分享按鈕 -->
   <div class="fixed-bottom-bar">
     <button class="btn-share-main" onclick="handleShare()">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -431,7 +411,9 @@
   </div>
 
   <script>
-    const APP_NAME = "WaveSync_Albert";
+    // 已經幫你綁定好的專屬 Vercel API 網址
+    const API_BASE = "https://music-api-pi-blond.vercel.app/api";
+
     const audio = document.getElementById("audioPlayer");
     const container = document.getElementById("playerContainer");
     const playBtn = document.getElementById("playBtn");
@@ -446,28 +428,7 @@
     const toast = document.getElementById("toast");
 
     let currentTrack = null;
-    let hosts = [
-      "https://discoveryprovider.audius.co",
-      "https://audius-discovery-1.cultur3stake.com",
-      "https://discovery-us-01.audius.openplayer.org"
-    ];
-    let selectedHost = hosts[0];
 
-    // 初始化獲取健康的 discovery 節點
-    async function initHost() {
-      try {
-        const res = await fetch("https://api.audius.co");
-        const json = await res.json();
-        if (json.data && json.data.length > 0) {
-          hosts = json.data;
-          selectedHost = hosts[0];
-        }
-      } catch (e) {
-        console.warn("節點連線備援中", e);
-      }
-    }
-
-    // 播放 / 暫停切換
     function togglePlay() {
       if (!audio.src) {
         showToast("請先選擇一首歌曲！", true);
@@ -477,9 +438,7 @@
         audio.play().then(() => {
           playBtn.innerText = "⏸";
           container.classList.add("playing");
-        }).catch(err => {
-          showToast("此曲源已被下架或無法播放，請換一首", true);
-        });
+        }).catch(() => showToast("播放失敗，請再試一次", true));
       } else {
         audio.pause();
         playBtn.innerText = "▶";
@@ -487,11 +446,9 @@
       }
     }
 
-    // 進度條事件
     audio.addEventListener("timeupdate", () => {
       if (!isNaN(audio.duration) && audio.duration > 0) {
-        const percent = (audio.currentTime / audio.duration) * 100;
-        progressBar.value = percent;
+        progressBar.value = (audio.currentTime / audio.duration) * 100;
         currentTimeText.innerText = formatTime(audio.currentTime);
         durationText.innerText = formatTime(audio.duration);
       }
@@ -512,53 +469,6 @@
       container.classList.remove("playing");
     });
 
-    // 播放指定歌曲（帶重試機制）
-    async function playTrack(track, startTime = 0) {
-      currentTrack = track;
-      trackTitle.innerText = track.title;
-      trackArtist.innerText = track.user ? track.user.name : "未知歌手";
-
-      if (track.artwork && track.artwork["480x480"]) {
-        cover.src = track.artwork["480x480"];
-      }
-
-      playBtn.innerText = "⏳";
-      currentTimeText.innerText = "0:00";
-      durationText.innerText = formatTime(track.duration || 0);
-
-      // 嘗試播放串流
-      let success = false;
-      for (let i = 0; i < Math.min(3, hosts.length); i++) {
-        const streamUrl = `${hosts[i]}/v1/tracks/${track.id}/stream?app_name=${APP_NAME}`;
-        try {
-          audio.src = streamUrl;
-          if (startTime > 0) audio.currentTime = startTime;
-          await audio.play();
-          success = true;
-          playBtn.innerText = "⏸";
-          container.classList.add("playing");
-          break;
-        } catch (e) {
-          console.warn("節點失敗，嘗試下一個:", hosts[i]);
-        }
-      }
-
-      if (!success) {
-        playBtn.innerText = "▶";
-        container.classList.remove("playing");
-        showToast("⚠️ 版權受限，該歌曲串流無法播放，請換一首！", true);
-      }
-
-      if ('mediaSession' in navigator) {
-        navigator.mediaSession.metadata = new MediaMetadata({
-          title: track.title,
-          artist: track.user ? track.user.name : "",
-          artwork: track.artwork ? [{ src: track.artwork["480x480"] || track.artwork["150x150"], sizes: "512x512", type: "image/jpeg" }] : []
-        });
-      }
-    }
-
-    // 搜尋音樂
     async function searchMusic() {
       const q = searchInput.value.trim();
       if (!q) return;
@@ -566,57 +476,94 @@
       resultsContainer.innerHTML = `<div class="empty-state">正在尋找「${escapeHtml(q)}」...</div>`;
 
       try {
-        const res = await fetch(`${selectedHost}/v1/tracks/search?query=${encodeURIComponent(q)}&app_name=${APP_NAME}`);
-        const data = await res.json();
-        renderResults(data.data || []);
+        const res = await fetch(`${API_BASE}/cloudsearch?keywords=${encodeURIComponent(q)}&limit=20`);
+        const json = await res.json();
+        const songs = json.result ? json.result.songs : [];
+        renderResults(songs);
       } catch (e) {
-        resultsContainer.innerHTML = `<div class="empty-state">連線繁忙，請再點一次搜尋</div>`;
+        resultsContainer.innerHTML = `<div class="empty-state">無法連線到伺服器，請稍候再試</div>`;
       }
     }
 
-    function renderResults(tracks) {
-      if (!tracks || tracks.length === 0) {
-        resultsContainer.innerHTML = `<div class="empty-state">找不到相符歌曲，建議換個關鍵字（如 lofi, chill, remix）</div>`;
+    function renderResults(songs) {
+      if (!songs || songs.length === 0) {
+        resultsContainer.innerHTML = `<div class="empty-state">找不到相符歌曲</div>`;
         return;
       }
       resultsContainer.innerHTML = "";
-      tracks.forEach(t => {
+      songs.forEach(s => {
         const item = document.createElement("div");
         item.className = "result-card";
-        const thumb = t.artwork ? t.artwork["150x150"] : "";
+        const artists = s.ar ? s.ar.map(a => a.name).join("/") : "未知歌手";
+        const pic = s.al ? s.al.picUrl : "";
 
         item.innerHTML = `
-          <img class="result-thumb" src="${thumb || 'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'44\' height=\'44\'%3E%3Crect width=\'100%25\' height=\'100%25\' fill=\'%23252836\'/%3E%3C/svg%3E'}" loading="lazy" />
+          <img class="result-thumb" src="${pic ? pic + '?param=90y90' : ''}" loading="lazy" />
           <div class="result-info">
-            <div class="result-name">${escapeHtml(t.title)}</div>
-            <div class="result-artist">${escapeHtml(t.user ? t.user.name : "未知歌手")} · ${formatTime(t.duration || 0)}</div>
+            <div class="result-name">${escapeHtml(s.name)}</div>
+            <div class="result-artist">${escapeHtml(artists)}</div>
           </div>
         `;
-        item.onclick = () => playTrack(t, 0);
+        item.onclick = () => playSong(s.id, s.name, artists, pic, 0);
         resultsContainer.appendChild(item);
       });
     }
 
-    // 複製 / 系統原生分享
+    async function playSong(id, name, artists, picUrl, startTime = 0) {
+      currentTrack = { id, name, artists, picUrl };
+      trackTitle.innerText = name;
+      trackArtist.innerText = artists;
+      if (picUrl) cover.src = picUrl + '?param=300y300';
+
+      playBtn.innerText = "⏳";
+
+      try {
+        const res = await fetch(`${API_BASE}/song/url/v1?id=${id}&level=standard`);
+        const json = await res.json();
+        const songData = json.data && json.data[0];
+
+        if (songData && songData.url) {
+          const streamUrl = songData.url.replace(/^http:/, "https:");
+          audio.src = streamUrl;
+          if (startTime > 0) audio.currentTime = startTime;
+
+          await audio.play();
+          playBtn.innerText = "⏸";
+          container.classList.add("playing");
+
+          if ('mediaSession' in navigator) {
+            navigator.mediaSession.metadata = new MediaMetadata({
+              title: name,
+              artist: artists,
+              artwork: picUrl ? [{ src: picUrl + '?param=300y300' }] : []
+            });
+          }
+        } else {
+          throw new Error("無可用音訊");
+        }
+      } catch (err) {
+        playBtn.innerText = "▶";
+        container.classList.remove("playing");
+        showToast("⚠️ 此曲目受版權保護暫無法播放，請換一首", true);
+      }
+    }
+
     function handleShare() {
       if (!currentTrack) {
         showToast("⚠️ 請先點選一首歌曲播放！", true);
         return;
       }
-
       const curSec = Math.floor(audio.currentTime);
-      const shareUrl = `${window.location.origin}${window.location.pathname}?track=${currentTrack.id}&t=${curSec}`;
-      const shareTitle = `來聽這首：${currentTrack.title}`;
-      const shareText = `我正在聽《${currentTrack.title}》，從 ${formatTime(curSec)} 開始聽！`;
+      const shareUrl = `${window.location.origin}${window.location.pathname}?id=${currentTrack.id}&t=${curSec}`;
+      const shareTitle = `來聽這首：${currentTrack.name}`;
+      const shareText = `我正在聽《${currentTrack.name} - ${currentTrack.artists}》，從 ${formatTime(curSec)} 開始聽！`;
 
       if (navigator.share) {
         navigator.share({ title: shareTitle, text: shareText, url: shareUrl }).catch(() => {});
       } else {
         navigator.clipboard.writeText(shareUrl).then(() => {
           showToast(`✅ 已複製！從 ${formatTime(curSec)} 開始聽`);
-        }).catch(() => {
-          prompt("請長按複製分享網址：", shareUrl);
-        });
+        }).catch(() => prompt("請長按複製分享網址：", shareUrl));
       }
     }
 
@@ -637,16 +584,20 @@
 
     async function checkUrlParams() {
       const params = new URLSearchParams(window.location.search);
-      const trackId = params.get("track");
+      const id = params.get("id");
       const startTime = parseFloat(params.get("t")) || 0;
 
-      if (trackId) {
+      if (id) {
         try {
-          const res = await fetch(`${selectedHost}/v1/tracks/${trackId}?app_name=${APP_NAME}`);
+          const res = await fetch(`${API_BASE}/song/detail?ids=${id}`);
           const json = await res.json();
-          if (json.data) playTrack(json.data, startTime);
+          if (json.songs && json.songs.length > 0) {
+            const s = json.songs[0];
+            const artists = s.ar ? s.ar.map(a => a.name).join("/") : "";
+            playSong(s.id, s.name, artists, s.al ? s.al.picUrl : "", startTime);
+          }
         } catch (e) {
-          console.warn("無法取得分享曲目", e);
+          console.warn("無法取得分享歌曲資訊", e);
         }
       }
     }
@@ -657,7 +608,7 @@
       }[m]));
     }
 
-    initHost().then(() => checkUrlParams());
+    checkUrlParams();
   </script>
 </body>
 </html>
