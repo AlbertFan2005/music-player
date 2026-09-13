@@ -517,40 +517,53 @@
 
       playBtn.innerText = "⏳";
 
-      let playUrl = directUrl;
-
-      if (!playUrl) {
-        try {
-          const res = await fetch(`${API_BASE}/song/url?id=${id}`);
-          const json = await res.json();
-          if (json.data && json.data[0] && json.data[0].url) {
-            playUrl = json.data[0].url;
-          }
-        } catch (e) {
-          playUrl = `https://music.163.com/song/media/outer/url?id=${id}.mp3`;
-        }
+      if (!directUrl) {
+        showToast("⚠️ 找不到可用音訊", true);
+        playBtn.innerText = "▶";
+        return;
       }
 
-      audio.src = playUrl;
-      if (startTime > 0) audio.currentTime = startTime;
+      // 透過後端代理串流播放
+      const streamProxyUrl = `${API_BASE}/stream?url=${encodeURIComponent(directUrl)}`;
+      audio.src = streamProxyUrl;
 
-      audio.play().then(() => {
-        playBtn.innerText = "⏸";
-        container.classList.add("playing");
+      audio.oncanplay = async () => {
+        audio.oncanplay = null;
+        if (startTime > 0) audio.currentTime = startTime;
 
-        if ('mediaSession' in navigator) {
-          navigator.mediaSession.metadata = new MediaMetadata({
-            title: name,
-            artist: artists,
-            artwork: picUrl ? [{ src: picUrl }] : []
-          });
+        try {
+          await audio.play();
+          playBtn.innerText = "⏸";
+          container.classList.add("playing");
+
+          if ('mediaSession' in navigator) {
+            navigator.mediaSession.metadata = new MediaMetadata({
+              title: name,
+              artist: artists,
+              artwork: picUrl ? [{ src: picUrl }] : []
+            });
+          }
+        } catch (err) {
+          playBtn.innerText = "▶";
+          container.classList.remove("playing");
+          showToast("⚠️ 點擊播放鍵即可開始收聽", false);
         }
-      }).catch(() => {
-        playBtn.innerText = "▶";
-        container.classList.remove("playing");
-        showToast("⚠️ 播放受阻，請點選其他曲目", true);
-      });
+      };
+
+      audio.onerror = () => {
+        if (audio.src !== directUrl) {
+          audio.src = directUrl;
+          audio.load();
+        } else {
+          playBtn.innerText = "▶";
+          container.classList.remove("playing");
+          showToast("⚠️ 音訊載入失敗，請換一首試試", true);
+        }
+      };
+
+      audio.load();
     }
+
     function handleShare() {
       if (!currentTrack) {
         showToast("⚠️ 請先點選一首歌曲播放！", true);
@@ -585,33 +598,11 @@
       return `${m}:${s < 10 ? '0' : ''}${s}`;
     }
 
-    async function checkUrlParams() {
-      const params = new URLSearchParams(window.location.search);
-      const id = params.get("id");
-      const startTime = parseFloat(params.get("t")) || 0;
-
-      if (id) {
-        try {
-          const res = await fetch(`${API_BASE}/song/detail?ids=${id}`);
-          const json = await res.json();
-          if (json.songs && json.songs.length > 0) {
-            const s = json.songs[0];
-            const artists = s.ar ? s.ar.map(a => a.name).join("/") : "";
-            playSong(s.id, s.name, artists, s.al ? s.al.picUrl : "", startTime);
-          }
-        } catch (e) {
-          console.warn("無法取得分享歌曲資訊", e);
-        }
-      }
-    }
-
     function escapeHtml(str) {
       return (str || "").replace(/[&<>"']/g, m => ({
         "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
       }[m]));
     }
-
-    checkUrlParams();
   </script>
 </body>
 </html>
