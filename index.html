@@ -378,7 +378,7 @@
   <div class="app-container">
     <div class="header-bar">
       <div class="brand-title">WaveSync</div>
-      <div class="live-tag">智慧連播電台</div>
+      <div class="live-tag">無限智慧電台</div>
     </div>
 
     <div class="player-card" id="playerContainer">
@@ -389,7 +389,7 @@
 
       <div class="track-meta">
         <div id="trackTitle" class="track-title">輸入熱門歌名或歌手</div>
-        <div id="trackArtist" class="track-artist">播完自動探索相關好歌</div>
+        <div id="trackArtist" class="track-artist">全網經典無限連播</div>
       </div>
 
       <div class="progress-container">
@@ -444,9 +444,9 @@
     const resultsContainer = document.getElementById("resultsContainer");
     const toast = document.getElementById("toast");
 
-    // smartQueue 專門存放「自動連播」的關聯歌曲庫
+    // 播放佇列與狀態
     let smartQueue = [];
-    let currentQueueIndex = -1;
+    let currentQueueIndex = 0;
     let currentTrack = null;
 
     function togglePlay() {
@@ -471,35 +471,36 @@
       container.classList.remove("playing");
     });
 
-    // 核心亮點：當前歌曲播放完畢，自動切換下一首不同歌名的關聯好歌
+    // 核心：播完自動切換下一首
     audio.addEventListener("ended", () => {
       playNextTrack();
     });
 
     function playNextTrack() {
       if (smartQueue.length === 0) return;
-      let nextIndex = currentQueueIndex + 1;
-      if (nextIndex >= smartQueue.length) {
-        nextIndex = 0;
+      currentQueueIndex++;
+      if (currentQueueIndex >= smartQueue.length) {
+        currentQueueIndex = 0; // 播完一輪數十首後循環
       }
-      playFromQueue(nextIndex);
+      playQueueItem(currentQueueIndex);
     }
 
     function playPrevTrack() {
       if (smartQueue.length === 0) return;
-      let prevIndex = currentQueueIndex - 1;
-      if (prevIndex < 0) {
-        prevIndex = smartQueue.length - 1;
+      currentQueueIndex--;
+      if (currentQueueIndex < 0) {
+        currentQueueIndex = smartQueue.length - 1;
       }
-      playFromQueue(prevIndex);
+      playQueueItem(currentQueueIndex);
     }
 
-    function playFromQueue(index) {
+    function playQueueItem(index) {
       if (index < 0 || index >= smartQueue.length) return;
-      currentQueueIndex = index;
       const track = smartQueue[index];
-      const artist = track.artists ? track.artists.map(a => a.name).join("/") : "熱門歌手";
-      playCore(track.id, track.name, artist, track.pic, track.url, 0);
+      const artist = getArtistName(track);
+      
+      // 這裡傳入 isFromQueue = true，確保不會重新洗掉佇列！
+      playAudio(track.id, track.name, artist, track.pic, track.url, 0, true);
     }
 
     audio.addEventListener("timeupdate", () => {
@@ -540,10 +541,10 @@
         return;
       }
       resultsContainer.innerHTML = "";
-      songs.forEach((s, idx) => {
+      songs.forEach((s) => {
         const item = document.createElement("div");
         item.className = "result-card";
-        const artists = s.artists ? s.artists.map(a => a.name).join("/") : "熱門歌手";
+        const artists = getArtistName(s);
         const pic = s.pic || "";
 
         item.innerHTML = `
@@ -553,55 +554,66 @@
             <div class="result-artist">${escapeHtml(artists)}</div>
           </div>
         `;
-        // 使用者點選特定歌曲
-        item.onclick = () => onUserSelectSong(s, songs);
+        // 使用者點選歌曲
+        item.onclick = () => onSelectSong(s);
         resultsContainer.appendChild(item);
       });
     }
 
-    // 當使用者手動點選一首歌時觸發
-    async function onUserSelectSong(selectedSong, currentSearchList) {
-      const artistName = (selectedSong.artists && selectedSong.artists[0]) ? selectedSong.artists[0].name : "周杰倫";
-      
-      // 1. 先播放當前點擊的這首
-      const artist = selectedSong.artists ? selectedSong.artists.map(a => a.name).join("/") : "熱門歌手";
-      playCore(selectedSong.id, selectedSong.name, artist, selectedSong.pic, selectedSong.url, 0);
-
-      // 2. 初始化佇列：第一首放這首歌
-      smartQueue = [selectedSong];
-      currentQueueIndex = 0;
-
-      // 3. 背景自動載入該歌手的「其他經典熱門關聯歌曲」，並排除同名歌曲
-      loadArtistRadioQueue(artistName, selectedSong.name);
+    // 解析歌手名稱（防呆相容字串或陣列）
+    function getArtistName(track) {
+      if (Array.isArray(track.artists) && track.artists.length > 0) {
+        return track.artists.map(a => a.name).join("/");
+      }
+      return track.artist || track.author || "熱門歌手";
     }
 
-    // 自動建置關聯歌單（過濾掉同名晴天，抓取該歌手的其他代表作）
-    async function loadArtistRadioQueue(artistName, currentSongName) {
+    // 當使用者在搜尋結果中點選一首歌時
+    async function onSelectSong(song) {
+      const artist = getArtistName(song);
+      
+      // 1. 播放當前選的這首
+      playAudio(song.id, song.name, artist, song.pic, song.url, 0, false);
+
+      // 2. 初始化佇列，第一首為當前選中的歌
+      smartQueue = [song];
+      currentQueueIndex = 0;
+
+      // 3. 自動去拉取該歌手的大量熱門代表作（例如 20~30 首），並完全去重
+      await populateSmartQueue(artist, song.name);
+    }
+
+    async function populateSmartQueue(artistName, currentSongName) {
       try {
-        const res = await fetch(`${API_BASE}/search?keywords=${encodeURIComponent(artistName)}`);
+        // 以主要歌手的名字搜尋
+        const cleanArtist = artistName.split('/')[0].trim() || "周杰倫";
+        const res = await fetch(`${API_BASE}/search?keywords=${encodeURIComponent(cleanArtist)}`);
         const json = await res.json();
-        const artistSongs = (json.result && json.result.songs) ? json.result.songs : [];
+        const candidateSongs = (json.result && json.result.songs) ? json.result.songs : [];
 
-        // 整理關聯庫：去掉當前歌名、去掉重複歌名
-        const seenNames = new Set([currentSongName.toLowerCase().trim()]);
-        const filteredSongs = [];
+        // 排除歌名相同或已包含當前歌名的版本（例如晴天 Live、晴天 吉他版）
+        const baseKey = currentSongName.replace(/\(.*?\)|\[.*?\]/g, '').trim().toLowerCase();
+        const seenNames = new Set([baseKey]);
+        const addedList = [];
 
-        for (const s of artistSongs) {
-          const cleanName = s.name.toLowerCase().trim();
-          if (!seenNames.has(cleanName)) {
-            seenNames.add(cleanName);
-            filteredSongs.push(s);
+        for (const s of candidateSongs) {
+          const sNameKey = s.name.replace(/\(.*?\)|\[.*?\]/g, '').trim().toLowerCase();
+          // 如果歌名不同，且尚未加入佇列
+          if (!seenNames.has(sNameKey) && !sNameKey.includes(baseKey) && !baseKey.includes(sNameKey)) {
+            seenNames.add(sNameKey);
+            addedList.push(s);
           }
         }
 
-        // 接在當前歌曲後面，組成連播佇列
-        smartQueue = [smartQueue[0], ...filteredSongs];
+        // 拼接到第一首歌後面，形成擁有數十首不同歌的播放清單
+        smartQueue = [smartQueue[0], ...addedList];
+        showToast(`已為您加入 ${addedList.length} 首相關好歌進入連播！`, false);
       } catch (e) {
-        console.warn("無法取得智慧關聯歌單", e);
+        console.warn("無法取得關聯歌單", e);
       }
     }
 
-    async function playCore(id, name, artists, picUrl, playUrl, startTime = 0) {
+    function playAudio(id, name, artists, picUrl, playUrl, startTime = 0, isFromQueue = false) {
       currentTrack = { id, name, artists, picUrl, playUrl };
       trackTitle.innerText = name;
       trackArtist.innerText = artists;
@@ -633,7 +645,7 @@
           navigator.mediaSession.setActionHandler('pause', () => audio.pause());
         }
       }).catch(err => {
-        console.warn("Autoplay block notice:", err);
+        console.warn("Autoplay notice:", err);
         playBtn.innerText = "▶";
       });
     }
@@ -684,7 +696,7 @@
       const startTime = parseFloat(params.get("t")) || 0;
       if (id) {
         const streamUrl = `https://api.qijieya.cn/meting/?type=url&id=${id}`;
-        playCore(id, "分享歌曲", "點擊播放", "", streamUrl, startTime);
+        playAudio(id, "分享歌曲", "點擊播放", "", streamUrl, startTime, false);
       }
     });
   </script>
