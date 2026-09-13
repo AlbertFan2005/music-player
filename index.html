@@ -351,14 +351,15 @@
       background: rgba(239, 68, 68, 0.95) !important;
     }
 
-    /* 隱藏但保持活躍的官方播放容器 */
+    /* 播放器掛載容器 (必須保有尺寸才能正常播音訊) */
     #yt-hidden-frame {
-      position: absolute;
-      width: 1px;
-      height: 1px;
+      position: fixed;
+      bottom: -300px;
+      left: 0;
+      width: 200px;
+      height: 200px;
       opacity: 0.01;
       pointer-events: none;
-      bottom: 0;
     }
   </style>
   <script src="https://www.youtube.com/iframe_api"></script>
@@ -397,7 +398,7 @@
         <button class="btn-play-toggle" id="playBtn" onclick="togglePlay()">▶</button>
       </div>
 
-      <!-- 隱藏的官方播放核心 -->
+      <!-- 官方背景音訊掛載點 -->
       <div id="yt-hidden-frame"></div>
     </div>
 
@@ -440,26 +441,32 @@
     let ytPlayer = null;
     let currentTrack = null;
     let progressTimer = null;
+    let searchResultsList = [];
 
-    // 初始化隱藏的官方播放器
+    // 初始化 IFrame API
     window.onYouTubeIframeAPIReady = function() {
       ytPlayer = new YT.Player('yt-hidden-frame', {
         height: '200',
         width: '200',
         playerVars: {
+          autoplay: 1,
           playsinline: 1,
           controls: 0,
-          disablekb: 1,
-          origin: window.location.origin
+          rel: 0
         },
         events: {
-          'onStateChange': onPlayerStateChange
+          'onReady': onPlayerReady,
+          'onStateChange': onPlayerStateChange,
+          'onError': onPlayerError
         }
       });
     };
 
+    function onPlayerReady(event) {
+      console.log("YT Engine Ready");
+    }
+
     function onPlayerStateChange(event) {
-      // 播放中
       if (event.data === YT.PlayerState.PLAYING) {
         playBtn.innerText = "⏸";
         container.classList.add("playing");
@@ -468,9 +475,24 @@
         playBtn.innerText = "▶";
         container.classList.remove("playing");
         stopProgressTracking();
-      } else if (event.data === YT.PlayerState.BUFFERING) {
-        playBtn.innerText = "⏳";
       }
+    }
+
+    // 處理版權阻擋 (Code 150 / 101：官方禁外嵌)
+    function onPlayerError(event) {
+      console.warn("Playback blocked on current video, auto fallback...", event.data);
+      // 自動嘗試清單中的下一個版本
+      if (searchResultsList.length > 1) {
+        const next = searchResultsList.find(s => s.id !== currentTrack.id);
+        if (next) {
+          showToast("官方原版限制外嵌，已自動切換可用音源！", false);
+          playSong(next.id, next.name, next.artists[0]?.name || "熱門音樂", next.pic, 0);
+          return;
+        }
+      }
+      playBtn.innerText = "▶";
+      container.classList.remove("playing");
+      showToast("⚠️ 此版本受版權保護，請點選其他翻唱/現場版本", true);
     }
 
     function togglePlay() {
@@ -525,6 +547,7 @@
         const res = await fetch(`${API_BASE}/search?keywords=${encodeURIComponent(q)}`);
         const json = await res.json();
         const songs = (json.result && json.result.songs) ? json.result.songs : [];
+        searchResultsList = songs;
         renderResults(songs);
       } catch (e) {
         resultsContainer.innerHTML = `<div class="empty-state">無法連線到伺服器，請稍候再試</div>`;
@@ -550,6 +573,7 @@
             <div class="result-artist">${escapeHtml(artists)}</div>
           </div>
         `;
+        // 使用者點擊時直接觸發 playSong
         item.onclick = () => playSong(s.id, s.name, artists, pic, 0);
         resultsContainer.appendChild(item);
       });
@@ -561,7 +585,9 @@
       trackArtist.innerText = artists;
       if (picUrl) cover.src = picUrl;
 
-      playBtn.innerText = "⏳";
+      // 點擊後直接指示播放，不再停留沙漏
+      playBtn.innerText = "⏸";
+      container.classList.add("playing");
 
       if (ytPlayer && typeof ytPlayer.loadVideoById === 'function') {
         ytPlayer.loadVideoById({
@@ -576,8 +602,6 @@
             artwork: picUrl ? [{ src: picUrl }] : []
           });
         }
-      } else {
-        setTimeout(() => playSong(videoId, name, artists, picUrl, startTime), 500);
       }
     }
 
@@ -620,21 +644,6 @@
         "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
       }[m]));
     }
-
-    // 檢查網址是否有分享參數
-    window.addEventListener("load", () => {
-      const params = new URLSearchParams(window.location.search);
-      const id = params.get("id");
-      const startTime = parseFloat(params.get("t")) || 0;
-      if (id) {
-        const checkTimer = setInterval(() => {
-          if (ytPlayer && typeof ytPlayer.loadVideoById === 'function') {
-            clearInterval(checkTimer);
-            playSong(id, "分享歌曲", "即將播放", "", startTime);
-          }
-        }, 300);
-      }
-    });
   </script>
 </body>
 </html>
