@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <title>DinoMusic 網頁版背景撥放</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -14,8 +14,8 @@
       --accent: #ec4899;
       --bg-gradient: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
       --card-bg: rgba(255, 255, 255, 0.92);
-      --card-border: rgba(226, 232, 240, 0.8);
-      --card-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.05), 0 0 1px rgba(0, 0, 0, 0.1);
+      --card-border: rgba(226, 232, 240, 0.85);
+      --card-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.06), 0 0 1px rgba(0, 0, 0, 0.08);
       --text-main: #0f172a;
       --text-sub: #64748b;
       --text-muted: #94a3b8;
@@ -35,12 +35,11 @@
       min-height: 100vh;
       display: flex;
       justify-content: center;
-      padding: 16px 16px 110px;
+      padding: 16px 16px calc(100px + env(safe-area-inset-bottom, 20px));
       position: relative;
       overflow-x: hidden;
     }
 
-    /* 柔和環境微光 */
     .bg-blob {
       position: fixed;
       border-radius: 50%;
@@ -72,7 +71,7 @@
       gap: 16px;
     }
 
-    /* 頂部導航 */
+    /* 頂部列 */
     .header-bar {
       display: flex;
       align-items: center;
@@ -113,7 +112,7 @@
       box-shadow: 0 0 6px #10b981;
     }
 
-    /* 播放器核心卡片 */
+    /* 主播放器卡片 */
     .main-player-card {
       background: var(--card-bg);
       backdrop-filter: blur(24px);
@@ -128,7 +127,7 @@
       text-align: center;
     }
 
-    /* 精緻 CD 唱盤 */
+    /* CD 唱盤 */
     .disc-container {
       position: relative;
       width: 175px;
@@ -180,7 +179,6 @@
       height: 100%;
     }
 
-    /* 歌曲資訊 */
     .meta-box {
       width: 100%;
       margin-bottom: 16px;
@@ -235,12 +233,13 @@
       box-shadow: 0 2px 6px rgba(79, 70, 229, 0.3);
     }
 
-    /* 控制按鈕 */
+    /* 控制列 */
     .ctrl-row {
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 20px;
+      width: 100%;
     }
     .btn-step {
       width: 42px;
@@ -277,6 +276,27 @@
     }
     .btn-toggle-play:active {
       transform: scale(0.94);
+    }
+
+    /* 快捷分享小按鈕（卡片內建） */
+    .btn-card-share {
+      margin-top: 14px;
+      background: transparent;
+      border: 1px solid #e2e8f0;
+      color: var(--text-sub);
+      font-size: 0.78rem;
+      font-weight: 600;
+      padding: 6px 14px;
+      border-radius: 99px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+    .btn-card-share:active {
+      background: #f1f5f9;
+      transform: scale(0.96);
     }
 
     /* 搜尋欄 */
@@ -316,7 +336,7 @@
       transform: scale(0.96);
     }
 
-    /* 列表區塊 */
+    /* 播放清單 */
     .list-header {
       display: flex;
       align-items: center;
@@ -390,20 +410,21 @@
       padding: 30px 12px;
     }
 
-    /* 底部固定分享列 */
+    /* 底部懸浮分享大按鈕（支援手機 safe-area，高 z-index 保證絕對看得見） */
     .bottom-bar {
       position: fixed;
       bottom: 0;
       left: 0;
       right: 0;
-      background: rgba(255, 255, 255, 0.9);
+      background: rgba(255, 255, 255, 0.95);
       backdrop-filter: blur(20px);
       -webkit-backdrop-filter: blur(20px);
       border-top: 1px solid var(--card-border);
-      padding: 12px 18px;
+      padding: 12px 18px calc(12px + env(safe-area-inset-bottom, 0px));
       display: flex;
       justify-content: center;
-      z-index: 100;
+      z-index: 999;
+      box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.05);
     }
     .btn-share {
       width: 100%;
@@ -421,7 +442,7 @@
       justify-content: center;
       gap: 10px;
       cursor: pointer;
-      box-shadow: 0 4px 14px rgba(30, 27, 75, 0.2);
+      box-shadow: 0 4px 14px rgba(30, 27, 75, 0.25);
       transition: all 0.15s;
     }
     .btn-share:active {
@@ -442,7 +463,7 @@
       border-radius: 99px;
       box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
       transition: transform 0.3s ease;
-      z-index: 200;
+      z-index: 1000;
       pointer-events: none;
     }
     .toast-pill.show {
@@ -465,7 +486,7 @@
       <div class="live-status">背景播放</div>
     </div>
 
-    <!-- 主播放卡片 -->
+    <!-- 主播放面板 -->
     <div class="main-player-card" id="playerCard">
       <div class="disc-container">
         <img id="discCover" class="disc-art" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Crect width='100%25' height='100%25' fill='%23f1f5f9'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-size='48' fill='%23cbd5e1'%3E💿%3C/text%3E%3C/svg%3E" alt="Cover" />
@@ -494,6 +515,18 @@
         <button class="btn-step" onclick="playNext()" title="下一首">⏭</button>
       </div>
 
+      <!-- 卡片內建快捷分享鍵（雙重保證絕對點得到） -->
+      <button class="btn-card-share" onclick="handleShare()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="18" cy="5" r="3"></circle>
+          <circle cx="6" cy="12" r="3"></circle>
+          <circle cx="18" cy="19" r="3"></circle>
+          <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+          <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+        </svg>
+        <span>分享這首歌給朋友</span>
+      </button>
+
       <audio id="audioPlayer" preload="auto"></audio>
     </div>
 
@@ -503,7 +536,7 @@
       <button class="btn-submit-search" onclick="doSearch()">搜尋</button>
     </div>
 
-    <!-- 清單列 -->
+    <!-- 清單標頭 -->
     <div class="list-header">
       <span id="listTitle">播放清單</span>
       <span id="listCount">0 首歌曲</span>
@@ -514,7 +547,7 @@
     </div>
   </div>
 
-  <!-- 底部固定分享按鈕 -->
+  <!-- 底部固定大按鈕 -->
   <div class="bottom-bar">
     <button class="btn-share" onclick="handleShare()">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
@@ -638,7 +671,6 @@
 
       playToggleBtn.innerText = "⏳";
 
-      // 固定使用最穩定的直通串流網址
       const streamUrl = track.url || `https://api.qijieya.cn/meting/?type=url&id=${track.id}`;
       audio.src = streamUrl;
 
@@ -661,7 +693,7 @@
           navigator.mediaSession.setActionHandler('pause', () => audio.pause());
         }
       }).catch(err => {
-        console.warn("Autoplay block notice:", err);
+        console.warn("Autoplay notice:", err);
         playToggleBtn.innerText = "▶";
       });
     }
@@ -729,7 +761,6 @@
 
       playTrack(selected);
 
-      // 自動將該歌手的代表作排入連播清單
       if (mainArtist && mainArtist !== "未知歌手") {
         try {
           const res = await fetch(`${API_BASE}/search?keywords=${encodeURIComponent(mainArtist)}`);
@@ -812,7 +843,6 @@
       return (raw || "").replace(/\(.*?\)|\[.*?\]|（.*?）/g, '').trim().toLowerCase();
     }
 
-    // 重點修復：把完整的歌曲資訊包進網址，對方打開絕對不是空白！
     function handleShare() {
       if (!currentTrack) {
         showToast("⚠️ 請先點選一首歌曲播放！");
@@ -859,7 +889,7 @@
       }[m]));
     }
 
-    // 重點修復：檢查並還原分享的歌曲與秒數
+    // 還原分享歌曲與秒數
     window.addEventListener("load", () => {
       const p = new URLSearchParams(window.location.search);
       const id = p.get("id");
