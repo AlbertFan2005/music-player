@@ -495,38 +495,40 @@
         item.className = "result-card";
         const artists = s.artists ? s.artists.map(a => a.name).join("/") : (s.ar ? s.ar.map(a => a.name).join("/") : "未知歌手");
         const pic = (s.album && s.album.picUrl) ? s.album.picUrl : (s.al ? s.al.picUrl : "");
+        const streamUrl = s.streamUrl || "";
 
         item.innerHTML = `
-          <img class="result-thumb" src="${pic ? pic + '?param=90y90' : ''}" loading="lazy" />
+          <img class="result-thumb" src="${pic}" loading="lazy" />
           <div class="result-info">
             <div class="result-name">${escapeHtml(s.name)}</div>
             <div class="result-artist">${escapeHtml(artists)}</div>
           </div>
         `;
-        item.onclick = () => playSong(s.id, s.name, artists, pic, 0);
+        item.onclick = () => playSong(s.id, s.name, artists, pic, 0, streamUrl);
         resultsContainer.appendChild(item);
       });
     }
 
-    async function playSong(id, name, artists, picUrl, startTime = 0) {
-      currentTrack = { id, name, artists, picUrl };
+    async function playSong(id, name, artists, picUrl, startTime = 0, directUrl = "") {
+      currentTrack = { id, name, artists, picUrl, directUrl };
       trackTitle.innerText = name;
       trackArtist.innerText = artists;
-      if (picUrl) cover.src = picUrl + '?param=300y300';
+      if (picUrl) cover.src = picUrl;
 
       playBtn.innerText = "⏳";
 
-      // 優先候選網址：1. 官方解析出的 URL，2. 網易外鏈直鏈
-      let playUrl = `https://music.163.com/song/media/outer/url?id=${id}.mp3`;
+      let playUrl = directUrl;
 
-      try {
-        const res = await fetch(`${API_BASE}/song/url?id=${id}`);
-        const json = await res.json();
-        if (json.data && json.data[0] && json.data[0].url) {
-          playUrl = json.data[0].url;
+      if (!playUrl) {
+        try {
+          const res = await fetch(`${API_BASE}/song/url?id=${id}`);
+          const json = await res.json();
+          if (json.data && json.data[0] && json.data[0].url) {
+            playUrl = json.data[0].url;
+          }
+        } catch (e) {
+          playUrl = `https://music.163.com/song/media/outer/url?id=${id}.mp3`;
         }
-      } catch (e) {
-        console.warn("API 取得網址失敗，切換備用播放連結", e);
       }
 
       audio.src = playUrl;
@@ -540,23 +542,13 @@
           navigator.mediaSession.metadata = new MediaMetadata({
             title: name,
             artist: artists,
-            artwork: picUrl ? [{ src: picUrl + '?param=300y300' }] : []
+            artwork: picUrl ? [{ src: picUrl }] : []
           });
         }
-      }).catch(async (err) => {
-        // 如果第一種網址被瀏覽器攔截，自動改試備用外鏈通道
-        if (!audio.src.includes("outer/url")) {
-          audio.src = `https://music.163.com/song/media/outer/url?id=${id}.mp3`;
-          try {
-            await audio.play();
-            playBtn.innerText = "⏸";
-            container.classList.add("playing");
-            return;
-          } catch (retryErr) {}
-        }
+      }).catch(() => {
         playBtn.innerText = "▶";
         container.classList.remove("playing");
-        showToast("⚠️ 播放暫時受限，請點其他版本或稍候再試", true);
+        showToast("⚠️ 播放受阻，請點選其他曲目", true);
       });
     }
     function handleShare() {
