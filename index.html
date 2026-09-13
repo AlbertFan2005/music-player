@@ -93,6 +93,30 @@
       font-size: 1.25rem;
       -webkit-text-fill-color: initial;
     }
+    .header-badges {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .quality-btn {
+      font-size: 0.72rem;
+      font-weight: 700;
+      background: #ffffff;
+      color: #6366f1;
+      padding: 5px 10px;
+      border-radius: 99px;
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      box-shadow: 0 2px 8px rgba(99, 102, 241, 0.08);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.2s;
+    }
+    .quality-btn:active {
+      transform: scale(0.92);
+      background: #eff6ff;
+    }
     .live-tag {
       font-size: 0.72rem;
       font-weight: 700;
@@ -122,16 +146,16 @@
       -webkit-backdrop-filter: blur(28px);
       border: 1px solid var(--card-border);
       border-radius: 32px;
-      padding: 30px 24px 26px;
+      padding: 28px 24px 24px;
       text-align: center;
       box-shadow: var(--card-shadow);
     }
 
     .disc-wrapper {
       position: relative;
-      width: 190px;
-      height: 190px;
-      margin: 0 auto 24px;
+      width: 180px;
+      height: 180px;
+      margin: 0 auto 16px;
     }
     .disc-cover {
       width: 100%;
@@ -164,8 +188,24 @@
       to { transform: rotate(360deg); }
     }
 
+    /* 頻譜音訊波動畫布 */
+    .visualizer-container {
+      width: 100%;
+      height: 36px;
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    #visualizerCanvas {
+      width: 100%;
+      max-width: 280px;
+      height: 100%;
+      border-radius: 8px;
+    }
+
     .track-meta {
-      margin-bottom: 20px;
+      margin-bottom: 16px;
     }
     .track-title {
       font-size: 1.25rem;
@@ -174,11 +214,11 @@
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      margin-bottom: 6px;
+      margin-bottom: 4px;
       letter-spacing: -0.3px;
     }
     .track-artist {
-      font-size: 0.88rem;
+      font-size: 0.86rem;
       color: var(--text-sub);
       font-weight: 500;
     }
@@ -313,7 +353,7 @@
       border: 1px solid var(--card-border);
       border-radius: 24px;
       padding: 10px;
-      max-height: 310px;
+      max-height: 300px;
       overflow-y: auto;
       display: flex;
       flex-direction: column;
@@ -450,7 +490,13 @@
       <div class="brand-title">
         <span>🦕</span> DinoMusic
       </div>
-      <div class="live-tag">精準連播・背景播放</div>
+      <div class="header-badges">
+        <!-- 音質切換按鈕 -->
+        <button class="quality-btn" id="qualityBtn" onclick="toggleQuality()">
+          <span>⚡</span> <span id="qualityText">320K 極致</span>
+        </button>
+        <div class="live-tag">背景播放</div>
+      </div>
     </div>
 
     <!-- 主播放面板 -->
@@ -458,6 +504,11 @@
       <div class="disc-wrapper">
         <img id="cover" class="disc-cover" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='190' height='190'%3E%3Crect width='100%25' height='100%25' fill='%23f1f5f9'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-size='56' fill='%23cbd5e1'%3E💿%3C/text%3E%3C/svg%3E" alt="Cover" />
         <div class="disc-center-hole"></div>
+      </div>
+
+      <!-- 音樂頻譜波動畫布 -->
+      <div class="visualizer-container">
+        <canvas id="visualizerCanvas" width="280" height="36"></canvas>
       </div>
 
       <div class="track-meta">
@@ -477,7 +528,7 @@
         <button class="btn-ctrl" onclick="playNextTrack()" title="下一首">⏭</button>
       </div>
 
-      <audio id="audioPlayer" preload="auto"></audio>
+      <audio id="audioPlayer" preload="auto" crossorigin="anonymous"></audio>
     </div>
 
     <div class="search-wrapper">
@@ -522,11 +573,123 @@
     const resultsContainer = document.getElementById("resultsContainer");
     const playlistTitle = document.getElementById("playlistTitle");
     const playlistCount = document.getElementById("playlistCount");
+    const qualityText = document.getElementById("qualityText");
     const toast = document.getElementById("toast");
+    const canvas = document.getElementById("visualizerCanvas");
+    const canvasCtx = canvas.getContext("2d");
 
     let currentPlaylist = [];
     let currentIndex = -1;
     let currentPlayingTrack = null;
+
+    // 音質設定列表：128k (流暢) -> 320k (極致) -> flac (無損SQ)
+    const qualities = [
+      { key: "320", label: "320K 極致" },
+      { key: "flac", label: "FLAC 無損" },
+      { key: "128", label: "128K 流暢" }
+    ];
+    let qualityIdx = 0; // 預設 320K
+
+    // Web Audio API 視覺化節點
+    let audioCtx = null;
+    let analyser = null;
+    let sourceNode = null;
+    let visualizerTimer = null;
+    let isWebAudioInit = false;
+
+    function initVisualizer() {
+      if (isWebAudioInit) return;
+      try {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        audioCtx = new AudioContext();
+        analyser = audioCtx.createAnalyser();
+        analyser.fftSize = 64;
+        analyser.smoothingTimeConstant = 0.8;
+
+        sourceNode = audioCtx.createMediaElementSource(audio);
+        sourceNode.connect(analyser);
+        analyser.connect(audioCtx.destination);
+        isWebAudioInit = true;
+      } catch (e) {
+        console.warn("瀏覽器安全策略回退至擬真波動", e);
+      }
+    }
+
+    // 繪製音訊頻譜波動動畫
+    function renderVisualizer() {
+      visualizerTimer = requestAnimationFrame(renderVisualizer);
+
+      canvasCtx.clearRect(0, 0, canvas.width, canvas.height);
+      const barCount = 20;
+      const barWidth = 6;
+      const gap = 6;
+      const totalWidth = barCount * (barWidth + gap) - gap;
+      const startX = (canvas.width - totalWidth) / 2;
+
+      let dataArray = new Uint8Array(barCount);
+
+      if (isWebAudioInit && analyser && !audio.paused) {
+        const raw = new Uint8Array(analyser.frequencyBinCount);
+        analyser.getByteFrequencyData(raw);
+        for (let i = 0; i < barCount; i++) {
+          dataArray[i] = raw[i % raw.length];
+        }
+      } else if (!audio.paused) {
+        // 擬真動態節奏波形
+        const time = Date.now() * 0.006;
+        for (let i = 0; i < barCount; i++) {
+          const wave = Math.sin(time + i * 0.5) * 0.5 + 0.5;
+          dataArray[i] = Math.floor(wave * 180 + Math.random() * 40);
+        }
+      } else {
+        // 暫停時待機平滑小點
+        dataArray.fill(12);
+      }
+
+      for (let i = 0; i < barCount; i++) {
+        const val = dataArray[i];
+        const percent = val / 255;
+        const barHeight = Math.max(3, percent * (canvas.height - 4));
+        const x = startX + i * (barWidth + gap);
+        const y = canvas.height - barHeight;
+
+        // 漸層發光質感
+        const gradient = canvasCtx.createLinearGradient(0, canvas.height, 0, 0);
+        gradient.addColorStop(0, '#6366f1');
+        gradient.addColorStop(0.5, '#8b5cf6');
+        gradient.addColorStop(1, '#ec4899');
+
+        canvasCtx.fillStyle = gradient;
+        canvasCtx.beginPath();
+        canvasCtx.roundRect(x, y, barWidth, barHeight, [3, 3, 0, 0]);
+        canvasCtx.fill();
+      }
+    }
+    renderVisualizer();
+
+    // 音質切換
+    function toggleQuality() {
+      qualityIdx = (qualityIdx + 1) % qualities.length;
+      const q = qualities[qualityIdx];
+      qualityText.innerText = q.label;
+      showToast(`⚡ 已切換音質：${q.label}`, false);
+
+      // 若目前有歌曲正在播放，保存進度並無縫切換音源
+      if (currentPlayingTrack) {
+        const curSec = audio.currentTime;
+        const isPaused = audio.paused;
+        const newUrl = getStreamUrl(currentPlayingTrack.id, q.key);
+        audio.src = newUrl;
+        audio.currentTime = curSec;
+        if (!isPaused) {
+          audio.play().catch(() => {});
+        }
+      }
+    }
+
+    function getStreamUrl(id, brKey) {
+      return `https://api.qijieya.cn/meting/?type=url&id=${id}&br=${brKey}`;
+    }
 
     function togglePlay() {
       if (!audio.src) {
@@ -534,6 +697,9 @@
         return;
       }
       if (audio.paused) {
+        if (audioCtx && audioCtx.state === 'suspended') {
+          audioCtx.resume();
+        }
         audio.play();
       } else {
         audio.pause();
@@ -543,6 +709,10 @@
     audio.addEventListener("play", () => {
       playBtn.innerText = "⏸";
       container.classList.add("playing");
+      initVisualizer();
+      if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
     });
 
     audio.addEventListener("pause", () => {
@@ -591,7 +761,8 @@
 
       playBtn.innerText = "⏳";
 
-      const streamUrl = track.url || `https://api.qijieya.cn/meting/?type=url&id=${track.id}`;
+      const curBr = qualities[qualityIdx].key;
+      const streamUrl = getStreamUrl(track.id, curBr);
       audio.src = streamUrl;
 
       if (startTime > 0) {
@@ -601,6 +772,7 @@
       audio.play().then(() => {
         playBtn.innerText = "⏸";
         container.classList.add("playing");
+        initVisualizer();
 
         if ('mediaSession' in navigator) {
           navigator.mediaSession.metadata = new MediaMetadata({
@@ -662,8 +834,7 @@
           id: s.id,
           name: s.name,
           artist: getArtistName(s),
-          pic: s.pic || '',
-          url: s.url || ''
+          pic: s.pic || ''
         }));
 
         currentPlaylist = songs;
@@ -701,8 +872,7 @@
                 id: raw.id,
                 name: raw.name,
                 artist: getArtistName(raw),
-                pic: raw.pic || '',
-                url: raw.url || ''
+                pic: raw.pic || ''
               });
             }
           }
@@ -814,8 +984,7 @@
           id: id,
           name: "分享歌曲",
           artist: "點擊播放",
-          pic: "",
-          url: `https://api.qijieya.cn/meting/?type=url&id=${id}`
+          pic: ""
         };
         currentPlaylist = [dummyTrack];
         currentIndex = 0;
