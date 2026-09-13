@@ -502,12 +502,12 @@
             <div class="result-artist">${escapeHtml(artists)}</div>
           </div>
         `;
-        item.onclick = () => playSong(s.id, s.name, artists, s.albumId, 0);
+        item.onclick = () => playSong(s.id, s.name, artists, s.albumId || '0', 0);
         resultsContainer.appendChild(item);
       });
     }
 
-    async function playSong(hash, name, artists, albumId = 0, startTime = 0) {
+    async function playSong(hash, name, artists, albumId = '0', startTime = 0) {
       currentTrack = { id: hash, name, artists, albumId };
       trackTitle.innerText = name;
       trackArtist.innerText = artists;
@@ -541,7 +541,7 @@
       } catch (err) {
         playBtn.innerText = "▶";
         container.classList.remove("playing");
-        showToast("⚠️ 此音源載入失敗，請嘗試其他版本", true);
+        showToast("⚠️ 此音源載入失敗，請點選其他版本", true);
       }
     }
     function handleShare() {
