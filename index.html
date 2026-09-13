@@ -28,7 +28,6 @@
       --pill-border: #e2e8f0;
     }
 
-    /* 深色模式主題 */
     body.dark-mode {
       --bg-gradient: linear-gradient(180deg, #090a10 0%, #12141e 100%);
       --card-bg: rgba(24, 26, 38, 0.85);
@@ -98,7 +97,6 @@
       gap: 16px;
     }
 
-    /* 頂部列 */
     .header-bar {
       display: flex;
       align-items: center;
@@ -155,11 +153,7 @@
       box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
       transition: all 0.2s;
     }
-    .btn-menu-dots:active {
-      transform: scale(0.92);
-    }
 
-    /* 右上角下拉選單 */
     .dropdown-menu {
       position: absolute;
       top: 48px;
@@ -196,7 +190,21 @@
       background: var(--pill-bg);
     }
 
-    /* 主播放器卡片 */
+    /* 內嵌瀏覽器專屬提示條（點擊無痛移交原生瀏覽器以達成背景聽歌） */
+    .inapp-banner {
+      display: none;
+      background: linear-gradient(135deg, #4f46e5, #ec4899);
+      color: #ffffff;
+      padding: 12px 16px;
+      border-radius: 16px;
+      font-size: 0.84rem;
+      font-weight: 700;
+      text-align: center;
+      cursor: pointer;
+      box-shadow: 0 6px 18px rgba(79, 70, 229, 0.25);
+      line-height: 1.4;
+    }
+
     .main-player-card {
       background: var(--card-bg);
       backdrop-filter: blur(24px);
@@ -403,7 +411,6 @@
       transform: scale(0.96);
     }
 
-    /* 搜尋欄 */
     .search-box {
       display: flex;
       align-items: center;
@@ -436,11 +443,7 @@
       cursor: pointer;
       transition: all 0.15s;
     }
-    .btn-submit-search:active {
-      transform: scale(0.96);
-    }
 
-    /* 情境膠囊標籤 */
     .vibe-pills-wrap {
       display: flex;
       gap: 8px;
@@ -470,7 +473,6 @@
       color: #ffffff;
     }
 
-    /* 分頁列 */
     .tabs-bar {
       display: flex;
       gap: 8px;
@@ -569,7 +571,7 @@
       padding: 30px 12px;
     }
 
-    /* 歷史紀錄彈窗 (Modal) */
+    /* 歷史紀錄彈窗 */
     .history-modal-overlay {
       position: fixed;
       top: 0;
@@ -630,7 +632,6 @@
       max-height: 50vh;
     }
 
-    /* 底部分享大按鈕 */
     .bottom-bar {
       position: fixed;
       bottom: 0;
@@ -692,19 +693,6 @@
       opacity: 1;
       visibility: visible;
     }
-
-    .shared-banner {
-      display: none;
-      background: linear-gradient(135deg, #4f46e5, #ec4899);
-      color: #ffffff;
-      padding: 12px 16px;
-      border-radius: 16px;
-      font-size: 0.86rem;
-      font-weight: 700;
-      text-align: center;
-      cursor: pointer;
-      box-shadow: 0 8px 20px rgba(79, 70, 229, 0.25);
-    }
   </style>
 </head>
 <body>
@@ -714,7 +702,7 @@
 
   <div id="toast" class="toast-pill">已複製分享連結</div>
 
-  <!-- 歷史紀錄彈窗 -->
+  <!-- 歷史播放紀錄彈窗 -->
   <div class="history-modal-overlay" id="historyModal" onclick="closeHistoryModal(event)">
     <div class="history-modal-sheet" onclick="event.stopPropagation()">
       <div class="modal-head">
@@ -737,7 +725,6 @@
         <button class="btn-menu-dots" onclick="toggleMenu()" title="選單">⋮</button>
       </div>
 
-      <!-- 右上角下拉選單 -->
       <div class="dropdown-menu" id="dropdownMenu">
         <div class="dropdown-item" onclick="toggleDarkMode()">
           <span id="darkModeIcon">🌙</span>
@@ -750,8 +737,9 @@
       </div>
     </div>
 
-    <div id="sharedBanner" class="shared-banner" onclick="startSharedPlay()">
-      🎁 好友與你分享了音樂！點此立即聆聽 🎵
+    <!-- 內嵌瀏覽器環境專屬指引條 -->
+    <div id="inappBanner" class="inapp-banner" onclick="openInNativeBrowser()">
+      📲 想邊滑社群邊聽歌？點此以系統瀏覽器（Safari/Chrome）開啟！
     </div>
 
     <!-- 主播放卡片 -->
@@ -865,12 +853,12 @@
     const favCountSpan = document.getElementById("favCount");
     const tabExplore = document.getElementById("tabExplore");
     const tabFavs = document.getElementById("tabFavs");
-    const sharedBanner = document.getElementById("sharedBanner");
     const dropdownMenu = document.getElementById("dropdownMenu");
     const historyModal = document.getElementById("historyModal");
     const historyListContainer = document.getElementById("historyListContainer");
     const darkModeIcon = document.getElementById("darkModeIcon");
     const darkModeText = document.getElementById("darkModeText");
+    const inappBanner = document.getElementById("inappBanner");
     const canvas = document.getElementById("spectrumCanvas");
     const ctx = canvas.getContext("2d");
 
@@ -879,6 +867,26 @@
     let currentTrack = null;
     let currentTab = "explore";
     let exploreBackupList = [];
+
+    // --- 內嵌瀏覽器偵測與無痛呼叫 ---
+    function isInAppBrowser() {
+      const ua = navigator.userAgent || navigator.vendor || window.opera;
+      return /Line|Instagram|FB_IAB|FBAN|FBAV/i.test(ua);
+    }
+
+    function openInNativeBrowser() {
+      const curUrl = window.location.href;
+      const ua = navigator.userAgent.toLowerCase();
+
+      // Android: 使用 intent 協定直接啟動系統 Chrome
+      if (/android/i.test(ua)) {
+        const noScheme = curUrl.replace(/^https?:\/\//, '');
+        window.location.href = `intent://${noScheme}#Intent;scheme=https;package=com.android.chrome;end`;
+      } else {
+        // iOS: 提示點擊右上角三點
+        showToast("👉 請點擊畫面右上角「•••」，選擇「以 Safari 開啟」即可背景播放！");
+      }
+    }
 
     // --- 選單與深色模式 ---
     function toggleMenu() {
@@ -933,7 +941,7 @@
       historyModal.classList.add("show");
     }
 
-    function closeHistoryModal(e) {
+    function closeHistoryModal() {
       historyModal.classList.remove("show");
     }
 
@@ -1093,7 +1101,6 @@
     audio.addEventListener("play", () => {
       playToggleBtn.innerText = "⏸";
       playerCard.classList.add("playing");
-      sharedBanner.style.display = "none";
     });
 
     audio.addEventListener("pause", () => {
@@ -1161,16 +1168,6 @@
         });
       } else {
         playToggleBtn.innerText = "▶";
-      }
-    }
-
-    function startSharedPlay() {
-      sharedBanner.style.display = "none";
-      if (audio.paused) {
-        audio.play().then(() => {
-          playToggleBtn.innerText = "⏸";
-          playerCard.classList.add("playing");
-        }).catch(() => {});
       }
     }
 
@@ -1338,6 +1335,7 @@
       return (raw || "").replace(/\(.*?\)|\[.*?\]|（.*?）/g, '').trim().toLowerCase();
     }
 
+    // 核心升級：自動附帶 LINE 免跳出參數 openExternalBrowser=1
     function handleShare() {
       if (!currentTrack) {
         showToast("⚠️ 請先點選一首歌曲播放！");
@@ -1350,7 +1348,8 @@
         name: currentTrack.name,
         artist: currentTrack.artist,
         pic: currentTrack.pic || '',
-        stream: encodeURIComponent(reliableStreamUrl)
+        stream: encodeURIComponent(reliableStreamUrl),
+        openExternalBrowser: "1" // 關鍵參數：在 LINE 點開時直接呼叫手機 Safari/Chrome
       });
 
       const shareUrl = `${window.location.origin}${window.location.pathname}?${params.toString()}`;
@@ -1385,8 +1384,12 @@
       }[m]));
     }
 
-    // 初始化深色模式、收藏與分享邏輯
     window.addEventListener("load", () => {
+      // 偵測是否在 Instagram/FB 等 App 內打開
+      if (isInAppBrowser()) {
+        inappBanner.style.display = "block";
+      }
+
       const savedTheme = localStorage.getItem("dinomusic_theme");
       if (savedTheme === "dark") {
         document.body.classList.add("dark-mode");
@@ -1418,16 +1421,11 @@
         renderListUI();
         playTrack(sharedTrack, false);
 
-        sharedBanner.style.display = "block";
-        sharedBanner.innerText = `🎁 好友分享了《${sharedTrack.name}》！點此立即開始聽 🎵`;
-        showToast(`🎶 點擊橫幅或 ▶ 即可開始收聽！`);
-
         const autoStartOnce = () => {
           if (audio.paused) {
             audio.play().then(() => {
               playToggleBtn.innerText = "⏸";
               playerCard.classList.add("playing");
-              sharedBanner.style.display = "none";
             }).catch(() => {});
           }
           window.removeEventListener("click", autoStartOnce);
