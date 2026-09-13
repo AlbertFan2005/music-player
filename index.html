@@ -19,6 +19,31 @@
       --text-main: #0f172a;
       --text-sub: #64748b;
       --text-muted: #94a3b8;
+      --blob-1: #e0e7ff;
+      --blob-2: #fce7f3;
+      --btn-bg: #1e1b4b;
+      --btn-text: #ffffff;
+      --slider-bg: #e2e8f0;
+      --pill-bg: #ffffff;
+      --pill-border: #e2e8f0;
+    }
+
+    /* 深色模式主題 */
+    body.dark-mode {
+      --bg-gradient: linear-gradient(180deg, #090a10 0%, #12141e 100%);
+      --card-bg: rgba(24, 26, 38, 0.85);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --card-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.6);
+      --text-main: #f8fafc;
+      --text-sub: #94a3b8;
+      --text-muted: #64748b;
+      --blob-1: rgba(79, 70, 229, 0.18);
+      --blob-2: rgba(236, 72, 153, 0.15);
+      --btn-bg: #6366f1;
+      --btn-text: #ffffff;
+      --slider-bg: rgba(255, 255, 255, 0.15);
+      --pill-bg: rgba(255, 255, 255, 0.06);
+      --pill-border: rgba(255, 255, 255, 0.1);
     }
 
     * {
@@ -38,6 +63,7 @@
       padding: 16px 16px calc(100px + env(safe-area-inset-bottom, 20px));
       position: relative;
       overflow-x: hidden;
+      transition: background 0.3s ease, color 0.3s ease;
     }
 
     .bg-blob {
@@ -47,20 +73,21 @@
       z-index: -1;
       pointer-events: none;
       opacity: 0.6;
+      transition: background 0.3s ease;
     }
     .blob-1 {
       top: -10%;
       left: -10%;
       width: 380px;
       height: 380px;
-      background: #e0e7ff;
+      background: var(--blob-1);
     }
     .blob-2 {
       bottom: 10%;
       right: -10%;
       width: 320px;
       height: 320px;
-      background: #fce7f3;
+      background: var(--blob-2);
     }
 
     .app-shell {
@@ -71,33 +98,36 @@
       gap: 16px;
     }
 
+    /* 頂部列 */
     .header-bar {
       display: flex;
       align-items: center;
       justify-content: space-between;
       padding: 6px 4px;
+      position: relative;
     }
     .brand-title {
       font-size: 1.35rem;
       font-weight: 800;
       letter-spacing: -0.6px;
-      color: #1e1b4b;
       display: flex;
       align-items: center;
       gap: 8px;
     }
-    .brand-title .logo-icon {
-      font-size: 1.4rem;
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
     .live-status {
       font-size: 0.72rem;
       font-weight: 700;
-      background: #ffffff;
-      color: #4f46e5;
-      padding: 4px 12px;
+      background: var(--card-bg);
+      color: var(--primary);
+      padding: 4px 10px;
       border-radius: 99px;
-      border: 1px solid #e0e7ff;
-      box-shadow: 0 2px 6px rgba(79, 70, 229, 0.08);
+      border: 1px solid var(--card-border);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
       display: inline-flex;
       align-items: center;
       gap: 6px;
@@ -110,7 +140,63 @@
       border-radius: 50%;
       box-shadow: 0 0 6px #10b981;
     }
+    .btn-menu-dots {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      color: var(--text-main);
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.15rem;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+      transition: all 0.2s;
+    }
+    .btn-menu-dots:active {
+      transform: scale(0.92);
+    }
 
+    /* 右上角下拉選單 */
+    .dropdown-menu {
+      position: absolute;
+      top: 48px;
+      right: 4px;
+      background: var(--card-bg);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid var(--card-border);
+      border-radius: 18px;
+      padding: 6px;
+      box-shadow: 0 16px 32px rgba(0, 0, 0, 0.15);
+      display: none;
+      flex-direction: column;
+      gap: 4px;
+      z-index: 500;
+      min-width: 170px;
+    }
+    .dropdown-menu.show {
+      display: flex;
+    }
+    .dropdown-item {
+      padding: 10px 14px;
+      border-radius: 12px;
+      font-size: 0.86rem;
+      font-weight: 600;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .dropdown-item:active {
+      background: var(--pill-bg);
+    }
+
+    /* 主播放器卡片 */
     .main-player-card {
       background: var(--card-bg);
       backdrop-filter: blur(24px);
@@ -130,8 +216,8 @@
       position: absolute;
       top: 18px;
       right: 18px;
-      background: #ffffff;
-      border: 1px solid #e2e8f0;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
       width: 38px;
       height: 38px;
       border-radius: 50%;
@@ -149,7 +235,7 @@
     .btn-fav-toggle.active {
       color: var(--accent-pink);
       border-color: #fbcfe8;
-      background: #fff1f2;
+      background: rgba(236, 72, 153, 0.12);
     }
 
     .disc-container {
@@ -163,8 +249,8 @@
       height: 100%;
       border-radius: 50%;
       object-fit: cover;
-      border: 4px solid #ffffff;
-      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.12), inset 0 0 0 1px rgba(0, 0, 0, 0.05);
+      border: 4px solid var(--card-bg);
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.15), inset 0 0 0 1px rgba(0, 0, 0, 0.05);
       animation: rotateVinyl 20s linear infinite;
       animation-play-state: paused;
     }
@@ -179,8 +265,8 @@
       width: 34px;
       height: 34px;
       border-radius: 50%;
-      background: #f8fafc;
-      border: 4px solid #ffffff;
+      background: var(--card-bg);
+      border: 4px solid var(--card-border);
       box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.15);
     }
 
@@ -239,7 +325,7 @@
     .seek-slider {
       flex: 1;
       height: 5px;
-      background: #e2e8f0;
+      background: var(--slider-bg);
       border-radius: 99px;
       outline: none;
       -webkit-appearance: none;
@@ -266,8 +352,8 @@
       width: 42px;
       height: 42px;
       border-radius: 50%;
-      background: #f1f5f9;
-      border: 1px solid rgba(255, 255, 255, 0.8);
+      background: var(--pill-bg);
+      border: 1px solid var(--card-border);
       color: var(--text-sub);
       font-size: 1.05rem;
       cursor: pointer;
@@ -278,7 +364,6 @@
     }
     .btn-step:active {
       transform: scale(0.92);
-      background: #e2e8f0;
     }
     .btn-toggle-play {
       width: 58px;
@@ -302,7 +387,7 @@
     .btn-card-share {
       margin-top: 14px;
       background: transparent;
-      border: 1px solid #e2e8f0;
+      border: 1px solid var(--card-border);
       color: var(--text-sub);
       font-size: 0.78rem;
       font-weight: 600;
@@ -315,14 +400,14 @@
       transition: all 0.2s;
     }
     .btn-card-share:active {
-      background: #f1f5f9;
       transform: scale(0.96);
     }
 
+    /* 搜尋欄 */
     .search-box {
       display: flex;
       align-items: center;
-      background: #ffffff;
+      background: var(--card-bg);
       border: 1px solid var(--card-border);
       border-radius: 18px;
       padding: 5px 6px 5px 16px;
@@ -341,9 +426,9 @@
       color: var(--text-muted);
     }
     .btn-submit-search {
-      background: #1e1b4b;
+      background: var(--btn-bg);
       border: none;
-      color: #ffffff;
+      color: var(--btn-text);
       font-weight: 600;
       font-size: 0.84rem;
       padding: 10px 18px;
@@ -355,6 +440,37 @@
       transform: scale(0.96);
     }
 
+    /* 情境膠囊標籤 */
+    .vibe-pills-wrap {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding: 2px 2px 4px;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+    .vibe-pills-wrap::-webkit-scrollbar {
+      display: none;
+    }
+    .vibe-pill {
+      flex-shrink: 0;
+      background: var(--card-bg);
+      border: 1px solid var(--pill-border);
+      color: var(--text-sub);
+      font-size: 0.78rem;
+      font-weight: 600;
+      padding: 6px 12px;
+      border-radius: 99px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .vibe-pill:active {
+      transform: scale(0.95);
+      background: var(--primary);
+      color: #ffffff;
+    }
+
+    /* 分頁列 */
     .tabs-bar {
       display: flex;
       gap: 8px;
@@ -367,17 +483,17 @@
       font-size: 0.82rem;
       font-weight: 700;
       text-align: center;
-      background: #ffffff;
+      background: var(--card-bg);
       border: 1px solid var(--card-border);
       color: var(--text-sub);
       cursor: pointer;
       transition: all 0.15s;
     }
     .tab-item.active {
-      background: #1e1b4b;
-      color: #ffffff;
-      border-color: #1e1b4b;
-      box-shadow: 0 4px 12px rgba(30, 27, 75, 0.15);
+      background: var(--btn-bg);
+      color: var(--btn-text);
+      border-color: var(--btn-bg);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
     }
 
     .list-header {
@@ -390,7 +506,7 @@
       color: var(--text-sub);
     }
     .songs-wrapper {
-      background: #ffffff;
+      background: var(--card-bg);
       border: 1px solid var(--card-border);
       border-radius: 22px;
       padding: 8px;
@@ -413,10 +529,10 @@
       transition: all 0.15s;
     }
     .song-row:active {
-      background: #f8fafc;
+      background: var(--pill-bg);
     }
     .song-row.is-active {
-      background: #eef2ff;
+      background: rgba(79, 70, 229, 0.12);
     }
     .song-row.is-active .song-row-title {
       color: var(--primary);
@@ -426,7 +542,7 @@
       height: 42px;
       border-radius: 10px;
       object-fit: cover;
-      background: #f1f5f9;
+      background: var(--pill-bg);
       flex-shrink: 0;
     }
     .song-row-details {
@@ -453,12 +569,74 @@
       padding: 30px 12px;
     }
 
+    /* 歷史紀錄彈窗 (Modal) */
+    .history-modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.45);
+      backdrop-filter: blur(6px);
+      display: none;
+      justify-content: center;
+      align-items: flex-end;
+      z-index: 1200;
+    }
+    .history-modal-overlay.show {
+      display: flex;
+    }
+    .history-modal-sheet {
+      width: 100%;
+      max-width: 440px;
+      background: var(--card-bg);
+      border-radius: 28px 28px 0 0;
+      border-top: 1px solid var(--card-border);
+      padding: 20px 18px calc(24px + env(safe-area-inset-bottom, 0px));
+      max-height: 75vh;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      animation: slideUp 0.25s ease-out;
+    }
+    @keyframes slideUp {
+      from { transform: translateY(100%); }
+      to { transform: translateY(0); }
+    }
+    .modal-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-bottom: 6px;
+      border-bottom: 1px solid var(--card-border);
+    }
+    .modal-title {
+      font-size: 1.05rem;
+      font-weight: 800;
+    }
+    .btn-clear-hist {
+      background: transparent;
+      border: none;
+      color: #ef4444;
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .history-list {
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      max-height: 50vh;
+    }
+
+    /* 底部分享大按鈕 */
     .bottom-bar {
       position: fixed;
       bottom: 0;
       left: 0;
       right: 0;
-      background: rgba(255, 255, 255, 0.95);
+      background: var(--card-bg);
       backdrop-filter: blur(20px);
       -webkit-backdrop-filter: blur(20px);
       border-top: 1px solid var(--card-border);
@@ -471,9 +649,9 @@
     .btn-share {
       width: 100%;
       max-width: 420px;
-      background: #1e1b4b;
+      background: var(--btn-bg);
       border: none;
-      color: #ffffff;
+      color: var(--btn-text);
       font-family: inherit;
       font-size: 0.94rem;
       font-weight: 700;
@@ -484,7 +662,7 @@
       justify-content: center;
       gap: 10px;
       cursor: pointer;
-      box-shadow: 0 4px 14px rgba(30, 27, 75, 0.25);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
       transition: all 0.15s;
     }
     .btn-share:active {
@@ -498,15 +676,15 @@
       transform: translate(-50%, -250%);
       opacity: 0;
       visibility: hidden;
-      background: #1e1b4b;
-      color: #ffffff;
+      background: var(--btn-bg);
+      color: var(--btn-text);
       font-size: 0.85rem;
       font-weight: 600;
       padding: 10px 20px;
       border-radius: 99px;
       box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
       transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
-      z-index: 1000;
+      z-index: 2000;
       pointer-events: none;
     }
     .toast-pill.show {
@@ -526,11 +704,6 @@
       text-align: center;
       cursor: pointer;
       box-shadow: 0 8px 20px rgba(79, 70, 229, 0.25);
-      animation: pulseBanner 2s infinite;
-    }
-    @keyframes pulseBanner {
-      0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.02); }
     }
   </style>
 </head>
@@ -541,12 +714,40 @@
 
   <div id="toast" class="toast-pill">已複製分享連結</div>
 
+  <!-- 歷史紀錄彈窗 -->
+  <div class="history-modal-overlay" id="historyModal" onclick="closeHistoryModal(event)">
+    <div class="history-modal-sheet" onclick="event.stopPropagation()">
+      <div class="modal-head">
+        <div class="modal-title">🕒 最近播放紀錄</div>
+        <button class="btn-clear-hist" onclick="clearHistory()">清空紀錄</button>
+      </div>
+      <div class="history-list" id="historyListContainer">
+        <div class="placeholder-msg">尚無播放紀錄</div>
+      </div>
+    </div>
+  </div>
+
   <div class="app-shell">
     <div class="header-bar">
       <div class="brand-title">
-        <span class="logo-icon">🦕</span> DinoMusic
+        <span>🦕</span> DinoMusic
       </div>
-      <div class="live-status">背景播放</div>
+      <div class="header-actions">
+        <div class="live-status">背景播放</div>
+        <button class="btn-menu-dots" onclick="toggleMenu()" title="選單">⋮</button>
+      </div>
+
+      <!-- 右上角下拉選單 -->
+      <div class="dropdown-menu" id="dropdownMenu">
+        <div class="dropdown-item" onclick="toggleDarkMode()">
+          <span id="darkModeIcon">🌙</span>
+          <span id="darkModeText">深色模式</span>
+        </div>
+        <div class="dropdown-item" onclick="openHistoryModal()">
+          <span>🕒</span>
+          <span>最近播放</span>
+        </div>
+      </div>
     </div>
 
     <div id="sharedBanner" class="shared-banner" onclick="startSharedPlay()">
@@ -570,7 +771,7 @@
 
       <div class="meta-box">
         <div id="trackTitle" class="song-name">探索喜愛的音樂</div>
-        <div id="trackArtist" class="singer-name">輸入歌名或歌手即可開始收聽</div>
+        <div id="trackArtist" class="singer-name">輸入歌名或點選下方標籤即可開始收聽</div>
       </div>
 
       <div class="progress-wrap">
@@ -603,6 +804,15 @@
     <div class="search-box">
       <input type="text" id="searchInput" placeholder="搜尋喜愛的歌手或歌名..." onkeydown="if(event.key==='Enter') doSearch()" />
       <button class="btn-submit-search" onclick="doSearch()">搜尋</button>
+    </div>
+
+    <!-- 情境標籤列 -->
+    <div class="vibe-pills-wrap">
+      <button class="vibe-pill" onclick="quickSearch('咖啡廳工作音樂')">☕ 專注工作</button>
+      <button class="vibe-pill" onclick="quickSearch('雨天放鬆')">🌧️ 雨天放鬆</button>
+      <button class="vibe-pill" onclick="quickSearch('健身跑步電音')">🏃 活力節奏</button>
+      <button class="vibe-pill" onclick="quickSearch('睡眠輕音樂')">🌙 睡前沉靜</button>
+      <button class="vibe-pill" onclick="quickSearch('周杰倫')">🎸 華語經典</button>
     </div>
 
     <!-- 分頁切換列 -->
@@ -656,6 +866,11 @@
     const tabExplore = document.getElementById("tabExplore");
     const tabFavs = document.getElementById("tabFavs");
     const sharedBanner = document.getElementById("sharedBanner");
+    const dropdownMenu = document.getElementById("dropdownMenu");
+    const historyModal = document.getElementById("historyModal");
+    const historyListContainer = document.getElementById("historyListContainer");
+    const darkModeIcon = document.getElementById("darkModeIcon");
+    const darkModeText = document.getElementById("darkModeText");
     const canvas = document.getElementById("spectrumCanvas");
     const ctx = canvas.getContext("2d");
 
@@ -665,6 +880,95 @@
     let currentTab = "explore";
     let exploreBackupList = [];
 
+    // --- 選單與深色模式 ---
+    function toggleMenu() {
+      dropdownMenu.classList.toggle("show");
+    }
+
+    document.addEventListener("click", (e) => {
+      if (!e.target.closest(".header-actions") && !e.target.closest(".dropdown-menu")) {
+        dropdownMenu.classList.remove("show");
+      }
+    });
+
+    function toggleDarkMode() {
+      const isDark = document.body.classList.toggle("dark-mode");
+      localStorage.setItem("dinomusic_theme", isDark ? "dark" : "light");
+      updateDarkModeUI(isDark);
+      dropdownMenu.classList.remove("show");
+      showToast(isDark ? "🌙 已開啟深色模式" : "☀️ 已切換至淺色模式");
+    }
+
+    function updateDarkModeUI(isDark) {
+      if (isDark) {
+        darkModeIcon.innerText = "☀️";
+        darkModeText.innerText = "淺色模式";
+      } else {
+        darkModeIcon.innerText = "🌙";
+        darkModeText.innerText = "深色模式";
+      }
+    }
+
+    // --- 歷史紀錄 (LocalStorage) ---
+    function getHistory() {
+      try {
+        return JSON.parse(localStorage.getItem("dinomusic_history") || "[]");
+      } catch (e) {
+        return [];
+      }
+    }
+
+    function pushHistory(track) {
+      if (!track || !track.id) return;
+      let hist = getHistory();
+      hist = hist.filter(h => String(h.id) !== String(track.id));
+      hist.unshift(track);
+      if (hist.length > 30) hist.pop();
+      localStorage.setItem("dinomusic_history", JSON.stringify(hist));
+    }
+
+    function openHistoryModal() {
+      dropdownMenu.classList.remove("show");
+      renderHistoryUI();
+      historyModal.classList.add("show");
+    }
+
+    function closeHistoryModal(e) {
+      historyModal.classList.remove("show");
+    }
+
+    function clearHistory() {
+      localStorage.removeItem("dinomusic_history");
+      renderHistoryUI();
+      showToast("已清空播放紀錄");
+    }
+
+    function renderHistoryUI() {
+      const hist = getHistory();
+      if (hist.length === 0) {
+        historyListContainer.innerHTML = `<div class="placeholder-msg">尚無播放紀錄</div>`;
+        return;
+      }
+      historyListContainer.innerHTML = "";
+      hist.forEach((s) => {
+        const row = document.createElement("div");
+        row.className = "song-row";
+        row.innerHTML = `
+          <img class="song-row-cover" src="${s.pic ? s.pic : 'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'42\' height=\'42\'%3E%3Crect width=\'100%25\' height=\'100%25\' fill=\'%23f1f5f9\'/%3E%3Ctext x=\'50%25\' y=\'50%25\' dominant-baseline=\'middle\' text-anchor=\'middle\' font-size=\'18\' fill=\'%2394a3b8\'%3E🎵%3C/text%3E%3C/svg%3E'}" loading="lazy" />
+          <div class="song-row-details">
+            <div class="song-row-title">${escapeHtml(s.name)}</div>
+            <div class="song-row-artist">${escapeHtml(s.artist)}</div>
+          </div>
+        `;
+        row.onclick = () => {
+          historyModal.classList.remove("show");
+          playTrack(s, true);
+        };
+        historyListContainer.appendChild(row);
+      });
+    }
+
+    // --- 我的最愛 (LocalStorage) ---
     function getFavorites() {
       try {
         return JSON.parse(localStorage.getItem("dinomusic_favs") || "[]");
@@ -713,7 +1017,9 @@
       saveFavorites(favs);
       if (currentTab === "favorites") {
         currentPlaylist = favs;
+        listCount.innerText = `${favs.length} 首收藏`;
         renderListUI();
+        highlightCurrentRow();
       }
     }
 
@@ -726,6 +1032,7 @@
         listTitle.innerText = "搜尋探索";
         listCount.innerText = `${currentPlaylist.length} 首歌曲`;
         renderListUI();
+        highlightCurrentRow();
       } else {
         tabFavs.classList.add("active");
         tabExplore.classList.remove("active");
@@ -734,9 +1041,11 @@
         listTitle.innerText = "我的最愛收藏庫";
         listCount.innerText = `${favs.length} 首收藏`;
         renderListUI();
+        highlightCurrentRow();
       }
     }
 
+    // --- 音訊頻譜波動 ---
     function drawSpectrum() {
       requestAnimationFrame(drawSpectrum);
       ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -761,7 +1070,7 @@
         const x = startX + i * (w + gap);
         const y = canvas.height - h;
 
-        ctx.fillStyle = isPlaying ? '#4f46e5' : '#cbd5e1';
+        ctx.fillStyle = isPlaying ? '#4f46e5' : (document.body.classList.contains('dark-mode') ? '#475569' : '#cbd5e1');
         ctx.beginPath();
         ctx.roundRect(x, y, w, h, [2, 2, 0, 0]);
         ctx.fill();
@@ -775,9 +1084,7 @@
         return;
       }
       if (audio.paused) {
-        audio.play().catch(e => {
-          showToast("請再點擊一次即可開始播放！");
-        });
+        audio.play().catch(() => showToast("請點擊即可開始播放！"));
       } else {
         audio.pause();
       }
@@ -825,6 +1132,7 @@
       trackArtist.innerText = track.artist;
       if (track.pic) discCover.src = track.pic;
       updateFavUI();
+      pushHistory(track);
 
       const streamUrl = track.url || `https://api.qijieya.cn/meting/?type=url&id=${track.id}`;
       audio.src = streamUrl;
@@ -893,6 +1201,11 @@
       }
     });
 
+    function quickSearch(tag) {
+      searchInput.value = tag;
+      doSearch();
+    }
+
     async function doSearch() {
       const q = searchInput.value.trim();
       if (!q) return;
@@ -929,6 +1242,14 @@
     }
 
     async function onUserSelectSong(clickedIndex) {
+      if (currentTab === "favorites") {
+        currentIndex = clickedIndex;
+        playTrack(currentPlaylist[clickedIndex], true);
+        highlightCurrentRow();
+        showToast(`❤️ 正在播放我的最愛`);
+        return;
+      }
+
       const selected = currentPlaylist[clickedIndex];
       const mainArtist = selected.artist.split('/')[0].trim();
 
@@ -1017,7 +1338,6 @@
       return (raw || "").replace(/\(.*?\)|\[.*?\]|（.*?）/g, '').trim().toLowerCase();
     }
 
-    // 純歌曲分享（不附帶時間秒數）
     function handleShare() {
       if (!currentTrack) {
         showToast("⚠️ 請先點選一首歌曲播放！");
@@ -1065,8 +1385,14 @@
       }[m]));
     }
 
-    // 處理好友分享歌曲載入
+    // 初始化深色模式、收藏與分享邏輯
     window.addEventListener("load", () => {
+      const savedTheme = localStorage.getItem("dinomusic_theme");
+      if (savedTheme === "dark") {
+        document.body.classList.add("dark-mode");
+        updateDarkModeUI(true);
+      }
+
       updateFavUI();
 
       const p = new URLSearchParams(window.location.search);
