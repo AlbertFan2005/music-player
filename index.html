@@ -493,7 +493,7 @@
       songs.forEach(s => {
         const item = document.createElement("div");
         item.className = "result-card";
-        const artists = s.artists ? s.artists.map(a => a.name).join("/") : "流行音樂";
+        const artists = s.artists ? s.artists.map(a => a.name).join("/") : "熱門音樂";
         const pic = s.pic || "";
 
         item.innerHTML = `
@@ -503,24 +503,27 @@
             <div class="result-artist">${escapeHtml(artists)}</div>
           </div>
         `;
-        item.onclick = () => playSong(s.id, s.name, artists, pic, s.streamUrl, 0);
+        item.onclick = () => playSong(s.id, s.name, artists, pic, 0);
         resultsContainer.appendChild(item);
       });
     }
 
-    async function playSong(id, name, artists, picUrl, streamUrl, startTime = 0) {
-      currentTrack = { id, name, artists, picUrl, streamUrl };
+    async function playSong(id, name, artists, picUrl, startTime = 0) {
+      currentTrack = { id, name, artists, picUrl };
       trackTitle.innerText = name;
       trackArtist.innerText = artists;
-      if (picUrl) {
-        cover.src = picUrl;
-      }
+      if (picUrl) cover.src = picUrl;
 
       playBtn.innerText = "⏳";
 
       try {
-        const directStream = streamUrl || `${API_BASE}/song/url?id=${id}`;
-        audio.src = directStream;
+        const res = await fetch(`${API_BASE}/song/url?id=${id}`);
+        const json = await res.json();
+        const finalUrl = json.data && json.data[0] && json.data[0].url;
+
+        if (!finalUrl) throw new Error("No URL");
+
+        audio.src = finalUrl;
         if (startTime > 0) audio.currentTime = startTime;
 
         await audio.play();
@@ -535,6 +538,7 @@
           });
         }
       } catch (err) {
+        console.error("Playback error:", err);
         playBtn.innerText = "▶";
         container.classList.remove("playing");
         showToast("⚠️ 點擊播放按鈕即可開始收聽", false);
