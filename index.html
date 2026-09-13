@@ -3,20 +3,23 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>WaveSync - 全網熱門音樂串流</title>
+  <title>WaveSync - 晨曦純白串流音樂</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com">
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --primary: #8b5cf6;
-      --primary-glow: rgba(139, 92, 246, 0.45);
+      --primary: #6366f1;
+      --primary-soft: rgba(99, 102, 241, 0.12);
       --accent: #ec4899;
-      --bg-base: #0a0b10;
-      --card-bg: rgba(26, 27, 38, 0.75);
-      --card-border: rgba(255, 255, 255, 0.08);
-      --text-main: #f8fafc;
-      --text-sub: #94a3b8;
+      --accent-coral: #f43f5e;
+      --bg-main: #f8fafc;
+      --card-bg: rgba(255, 255, 255, 0.82);
+      --card-border: rgba(255, 255, 255, 0.9);
+      --card-shadow: 0 20px 40px -15px rgba(99, 102, 241, 0.12), 0 0 20px rgba(0, 0, 0, 0.03);
+      --text-title: #0f172a;
+      --text-sub: #64748b;
+      --text-muted: #94a3b8;
     }
 
     * {
@@ -27,37 +30,49 @@
     }
 
     body {
-      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-      background-color: var(--bg-base);
-      color: var(--text-main);
+      font-family: 'Plus Jakarta Sans', 'Noto Sans TC', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: var(--bg-main);
+      color: var(--text-title);
       min-height: 100vh;
       display: flex;
       justify-content: center;
       padding: 16px;
-      padding-bottom: 96px;
+      padding-bottom: 105px;
       overflow-x: hidden;
       position: relative;
     }
 
-    .bg-glow-1 {
+    /* 柔和晨曦光斑背景 */
+    .aurora-glow-1 {
       position: fixed;
-      top: -100px;
-      left: -60px;
-      width: 300px;
-      height: 300px;
-      background: radial-gradient(circle, var(--primary-glow) 0%, transparent 70%);
+      top: -120px;
+      left: -80px;
+      width: 420px;
+      height: 420px;
+      background: radial-gradient(circle, rgba(165, 180, 252, 0.55) 0%, rgba(224, 231, 255, 0) 70%);
       filter: blur(50px);
       z-index: -1;
       pointer-events: none;
     }
-    .bg-glow-2 {
+    .aurora-glow-2 {
       position: fixed;
-      bottom: 60px;
-      right: -80px;
-      width: 280px;
-      height: 280px;
-      background: radial-gradient(circle, rgba(236, 72, 153, 0.25) 0%, transparent 70%);
-      filter: blur(60px);
+      top: 35%;
+      right: -100px;
+      width: 380px;
+      height: 380px;
+      background: radial-gradient(circle, rgba(251, 207, 232, 0.5) 0%, rgba(254, 242, 242, 0) 70%);
+      filter: blur(55px);
+      z-index: -1;
+      pointer-events: none;
+    }
+    .aurora-glow-3 {
+      position: fixed;
+      bottom: -80px;
+      left: 10%;
+      width: 350px;
+      height: 350px;
+      background: radial-gradient(circle, rgba(199, 210, 254, 0.45) 0%, rgba(240, 249, 255, 0) 70%);
+      filter: blur(50px);
       z-index: -1;
       pointer-events: none;
     }
@@ -70,69 +85,93 @@
       gap: 16px;
     }
 
+    /* 頂部標題 */
     .header-bar {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 6px 4px;
+      padding: 8px 6px;
     }
     .brand-title {
-      font-size: 1.35rem;
-      font-weight: 700;
-      background: linear-gradient(135deg, #fff 40%, var(--text-sub));
+      font-size: 1.45rem;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      background: linear-gradient(135deg, #312e81 0%, #4338ca 50%, #6366f1 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .brand-title span {
+      font-size: 1.1rem;
     }
     .live-tag {
       font-size: 0.72rem;
-      font-weight: 600;
-      background: rgba(139, 92, 246, 0.2);
-      border: 1px solid rgba(139, 92, 246, 0.4);
-      color: #c4b5fd;
-      padding: 3px 8px;
-      border-radius: 20px;
+      font-weight: 700;
+      background: #ffffff;
+      color: #4f46e5;
+      padding: 5px 12px;
+      border-radius: 99px;
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.1);
+      border: 1px solid rgba(224, 231, 255, 0.8);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .live-tag::before {
+      content: "";
+      width: 6px;
+      height: 6px;
+      background: #10b981;
+      border-radius: 50%;
+      display: inline-block;
+      box-shadow: 0 0 6px #10b981;
     }
 
+    /* 主要播放器卡片 */
     .player-card {
       background: var(--card-bg);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
+      backdrop-filter: blur(28px);
+      -webkit-backdrop-filter: blur(28px);
       border: 1px solid var(--card-border);
-      border-radius: 24px;
-      padding: 24px 20px;
+      border-radius: 32px;
+      padding: 30px 24px 26px;
       text-align: center;
-      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.4);
+      box-shadow: var(--card-shadow);
     }
 
-    .cover-wrapper {
+    /* 晨曦光感 CD 唱片 */
+    .disc-wrapper {
       position: relative;
-      width: 170px;
-      height: 170px;
-      margin: 0 auto 18px;
+      width: 190px;
+      height: 190px;
+      margin: 0 auto 24px;
     }
-    .cover-img {
+    .disc-cover {
       width: 100%;
       height: 100%;
       border-radius: 50%;
       object-fit: cover;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.5), inset 0 0 0 4px rgba(255,255,255,0.1);
-      animation: vinylRotate 16s linear infinite;
+      box-shadow: 0 16px 32px rgba(99, 102, 241, 0.18), 0 4px 12px rgba(0,0,0,0.06);
+      border: 5px solid #ffffff;
+      animation: vinylRotate 18s linear infinite;
       animation-play-state: paused;
     }
-    .playing .cover-img {
+    .playing .disc-cover {
       animation-play-state: running;
     }
-    .vinyl-hole {
+    .disc-center-hole {
       position: absolute;
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      width: 32px;
-      height: 32px;
+      width: 36px;
+      height: 36px;
       border-radius: 50%;
-      background: var(--bg-base);
-      border: 4px solid rgba(255,255,255,0.2);
-      box-shadow: 0 0 10px rgba(0,0,0,0.8);
+      background: #f8fafc;
+      border: 5px solid #ffffff;
+      box-shadow: inset 0 2px 5px rgba(0,0,0,0.1), 0 2px 8px rgba(0,0,0,0.08);
     }
 
     @keyframes vinylRotate {
@@ -141,181 +180,223 @@
     }
 
     .track-meta {
-      margin-bottom: 16px;
+      margin-bottom: 20px;
     }
     .track-title {
-      font-size: 1.15rem;
+      font-size: 1.25rem;
       font-weight: 700;
+      color: var(--text-title);
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      margin-bottom: 4px;
+      margin-bottom: 6px;
+      letter-spacing: -0.3px;
     }
     .track-artist {
-      font-size: 0.85rem;
+      font-size: 0.88rem;
       color: var(--text-sub);
+      font-weight: 500;
     }
 
+    /* 進度條 */
     .progress-container {
       display: flex;
       align-items: center;
-      gap: 10px;
-      margin-bottom: 14px;
+      gap: 12px;
+      margin-bottom: 18px;
     }
     .time-text {
-      font-size: 0.75rem;
-      color: var(--text-sub);
-      width: 35px;
+      font-size: 0.76rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      width: 38px;
       font-variant-numeric: tabular-nums;
     }
     .progress-bar {
       flex: 1;
       height: 6px;
-      background: rgba(255,255,255,0.1);
+      background: #e2e8f0;
       border-radius: 10px;
       outline: none;
       -webkit-appearance: none;
       cursor: pointer;
+      position: relative;
     }
     .progress-bar::-webkit-slider-thumb {
       -webkit-appearance: none;
-      width: 14px;
-      height: 14px;
+      width: 16px;
+      height: 16px;
       border-radius: 50%;
-      background: #fff;
-      box-shadow: 0 0 8px var(--primary);
+      background: #ffffff;
+      border: 2px solid var(--primary);
+      box-shadow: 0 2px 8px rgba(99, 102, 241, 0.35);
+      transition: transform 0.1s;
+    }
+    .progress-bar::-webkit-slider-thumb:active {
+      transform: scale(1.2);
     }
 
+    /* 控制按鈕 */
     .player-controls {
       display: flex;
       justify-content: center;
       align-items: center;
-      gap: 18px;
+      gap: 22px;
     }
     .btn-ctrl {
-      background: transparent;
-      border: none;
-      color: #cbd5e1;
-      font-size: 1.2rem;
+      background: #f1f5f9;
+      border: 1px solid rgba(255, 255, 255, 0.8);
+      color: var(--text-sub);
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      font-size: 1.1rem;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 8px;
+      transition: all 0.2s;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.03);
+    }
+    .btn-ctrl:active {
+      transform: scale(0.92);
+      background: #e2e8f0;
     }
     .btn-play-toggle {
-      width: 52px;
-      height: 52px;
+      width: 62px;
+      height: 62px;
       border-radius: 50%;
-      background: linear-gradient(135deg, var(--primary), var(--accent));
+      background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%);
       border: none;
-      color: #fff;
-      font-size: 1.3rem;
+      color: #ffffff;
+      font-size: 1.4rem;
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      box-shadow: 0 6px 18px var(--primary-glow);
+      box-shadow: 0 10px 24px rgba(99, 102, 241, 0.35);
+      transition: all 0.2s;
+    }
+    .btn-play-toggle:active {
+      transform: scale(0.94);
     }
 
+    /* 搜尋欄 */
     .search-wrapper {
       display: flex;
       align-items: center;
       background: var(--card-bg);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
       border: 1px solid var(--card-border);
-      border-radius: 16px;
-      padding: 6px 6px 6px 16px;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+      border-radius: 20px;
+      padding: 6px 6px 6px 18px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.03);
     }
     .search-wrapper input {
       flex: 1;
       background: transparent;
       border: none;
       outline: none;
-      color: #fff;
-      font-size: 0.92rem;
+      color: var(--text-title);
+      font-size: 0.95rem;
       font-family: inherit;
     }
+    .search-wrapper input::placeholder {
+      color: #94a3b8;
+    }
     .btn-search {
-      background: linear-gradient(135deg, var(--primary), var(--accent));
+      background: linear-gradient(135deg, #4f46e5, #6366f1);
       border: none;
-      color: #fff;
+      color: #ffffff;
       font-weight: 600;
-      font-size: 0.85rem;
-      padding: 10px 18px;
-      border-radius: 12px;
+      font-size: 0.88rem;
+      padding: 11px 20px;
+      border-radius: 15px;
       cursor: pointer;
+      box-shadow: 0 4px 14px rgba(99, 102, 241, 0.25);
+    }
+    .btn-search:active {
+      transform: scale(0.95);
     }
 
+    /* 搜尋結果清單 */
     .results-container {
       background: var(--card-bg);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
       border: 1px solid var(--card-border);
-      border-radius: 20px;
-      padding: 8px;
-      max-height: 280px;
+      border-radius: 24px;
+      padding: 10px;
+      max-height: 290px;
       overflow-y: auto;
       display: flex;
       flex-direction: column;
       gap: 6px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.03);
       -webkit-overflow-scrolling: touch;
     }
     .result-card {
       display: flex;
       align-items: center;
-      gap: 12px;
-      padding: 10px 12px;
-      border-radius: 14px;
+      gap: 14px;
+      padding: 10px 14px;
+      border-radius: 18px;
       cursor: pointer;
-      transition: background 0.2s;
+      background: #ffffff;
+      border: 1px solid rgba(241, 245, 249, 0.8);
+      transition: all 0.2s;
     }
     .result-card:active {
-      background: rgba(255, 255, 255, 0.08);
+      transform: scale(0.98);
+      background: #f8fafc;
     }
     .result-thumb {
-      width: 44px;
-      height: 44px;
-      border-radius: 10px;
+      width: 46px;
+      height: 46px;
+      border-radius: 12px;
       object-fit: cover;
-      background: #252836;
+      background: #f1f5f9;
       flex-shrink: 0;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
     }
     .result-info {
       flex: 1;
       min-width: 0;
     }
     .result-name {
-      font-size: 0.88rem;
-      font-weight: 600;
+      font-size: 0.92rem;
+      font-weight: 700;
+      color: var(--text-title);
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
     }
     .result-artist {
-      font-size: 0.76rem;
+      font-size: 0.78rem;
       color: var(--text-sub);
       margin-top: 2px;
+      font-weight: 500;
     }
     .empty-state {
       text-align: center;
-      color: #64748b;
-      font-size: 0.82rem;
-      padding: 24px 12px;
+      color: var(--text-muted);
+      font-size: 0.88rem;
+      font-weight: 500;
+      padding: 28px 12px;
     }
 
+    /* 底部懸浮分享列 */
     .fixed-bottom-bar {
       position: fixed;
       bottom: 0;
       left: 0;
       right: 0;
-      background: rgba(10, 11, 16, 0.85);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      border-top: 1px solid var(--card-border);
-      padding: 12px 16px;
+      background: rgba(255, 255, 255, 0.88);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border-top: 1px solid rgba(226, 232, 240, 0.8);
+      padding: 14px 20px;
       display: flex;
       justify-content: center;
       z-index: 100;
@@ -323,69 +404,84 @@
     .btn-share-main {
       width: 100%;
       max-width: 440px;
-      background: linear-gradient(135deg, var(--primary), var(--accent));
+      background: linear-gradient(135deg, #4f46e5 0%, #6366f1 50%, #8b5cf6 100%);
       border: none;
-      color: #fff;
+      color: #ffffff;
       font-family: inherit;
-      font-size: 0.95rem;
+      font-size: 0.96rem;
       font-weight: 700;
-      padding: 13px 20px;
-      border-radius: 16px;
+      padding: 14px 22px;
+      border-radius: 18px;
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 10px;
       cursor: pointer;
-      box-shadow: 0 8px 24px var(--primary-glow);
+      box-shadow: 0 8px 22px rgba(99, 102, 241, 0.28);
+      transition: all 0.2s;
+    }
+    .btn-share-main:active {
+      transform: scale(0.98);
     }
 
+    /* 提示膠囊 (Toast) */
     .toast-pill {
       position: fixed;
       top: 24px;
       left: 50%;
-      transform: translateX(-50%) translateY(-60px);
-      background: rgba(16, 185, 129, 0.95);
-      backdrop-filter: blur(10px);
-      color: #fff;
-      font-size: 0.85rem;
-      font-weight: 600;
-      padding: 10px 20px;
-      border-radius: 30px;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.35);
-      transition: transform 0.3s ease;
+      transform: translateX(-50%) translateY(-70px);
+      background: #ffffff;
+      color: #0f172a;
+      font-size: 0.88rem;
+      font-weight: 700;
+      padding: 12px 24px;
+      border-radius: 99px;
+      box-shadow: 0 12px 30px rgba(99, 102, 241, 0.15), 0 4px 10px rgba(0, 0, 0, 0.05);
+      border: 1px solid rgba(224, 231, 255, 0.9);
+      transition: transform 0.35s cubic-bezier(0.18, 0.89, 0.32, 1.28);
       z-index: 200;
       pointer-events: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
     .toast-pill.show {
       transform: translateX(-50%) translateY(0);
     }
     .toast-error {
-      background: rgba(239, 68, 68, 0.95) !important;
+      color: #e11d48 !important;
+      border-color: #fecdd3 !important;
     }
   </style>
 </head>
 <body>
 
-  <div class="bg-glow-1"></div>
-  <div class="bg-glow-2"></div>
+  <!-- 晨曦透光光斑 -->
+  <div class="aurora-glow-1"></div>
+  <div class="aurora-glow-2"></div>
+  <div class="aurora-glow-3"></div>
 
-  <div id="toast" class="toast-pill">已複製分享連結！</div>
+  <div id="toast" class="toast-pill">✨ 已複製分享連結！</div>
 
   <div class="app-container">
+    <!-- 頂部列 -->
     <div class="header-bar">
-      <div class="brand-title">WaveSync</div>
-      <div class="live-tag">無限電台・永不重複</div>
+      <div class="brand-title">
+        <span>☀️</span> WaveSync
+      </div>
+      <div class="live-tag">無限電台・背景播放</div>
     </div>
 
+    <!-- 主播放面板 -->
     <div class="player-card" id="playerContainer">
-      <div class="cover-wrapper">
-        <img id="cover" class="cover-img" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='170' height='170'%3E%3Crect width='100%25' height='100%25' fill='%231a1d2e'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-size='48' fill='%23555'%3E🎧%3C/text%3E%3C/svg%3E" alt="Cover" />
-        <div class="vinyl-hole"></div>
+      <div class="disc-wrapper">
+        <img id="cover" class="disc-cover" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='190' height='190'%3E%3Crect width='100%25' height='100%25' fill='%23f1f5f9'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-size='56' fill='%23cbd5e1'%3E💿%3C/text%3E%3C/svg%3E" alt="Cover" />
+        <div class="disc-center-hole"></div>
       </div>
 
       <div class="track-meta">
-        <div id="trackTitle" class="track-title">輸入熱門歌名或歌手</div>
-        <div id="trackArtist" class="track-artist">無限不重複探索好歌</div>
+        <div id="trackTitle" class="track-title">探索好聽的音樂</div>
+        <div id="trackArtist" class="track-artist">輸入熱門歌名或歌手開始收聽</div>
       </div>
 
       <div class="progress-container">
@@ -403,24 +499,27 @@
       <audio id="audioPlayer" preload="auto"></audio>
     </div>
 
+    <!-- 搜尋框 -->
     <div class="search-wrapper">
-      <input type="text" id="searchInput" placeholder="搜尋全網歌曲（例如：周杰倫 晴天）" onkeydown="if(event.key==='Enter') searchMusic()" />
+      <input type="text" id="searchInput" placeholder="搜尋喜愛的歌手或歌名（例如：周杰倫 晴天）" onkeydown="if(event.key==='Enter') searchMusic()" />
       <button class="btn-search" onclick="searchMusic()">搜尋</button>
     </div>
 
+    <!-- 歌曲結果清單 -->
     <div class="results-container" id="resultsContainer">
-      <div class="empty-state">輸入熱門歌名後點擊「搜尋」</div>
+      <div class="empty-state">在上方搜尋欄輸入歌名，立即聆聽 ✨</div>
     </div>
   </div>
 
+  <!-- 底部固定分享列 -->
   <div class="fixed-bottom-bar">
     <button class="btn-share-main" onclick="handleShare()">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
         <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path>
         <polyline points="16 6 12 2 8 6"></polyline>
         <line x1="12" y1="2" x2="12" y2="15"></line>
       </svg>
-      <span>分享當前音樂（含進度）</span>
+      <span>分享當前音樂（精確時間點）</span>
     </button>
   </div>
 
@@ -440,15 +539,15 @@
     const resultsContainer = document.getElementById("resultsContainer");
     const toast = document.getElementById("toast");
 
-    // 核心資料結構
-    let smartQueue = [];             // 無限增長的播放清單
-    let currentQueueIndex = 0;       // 目前正在播放的索引
+    // 核心資料結構（無限智慧探索佇列）
+    let smartQueue = [];
+    let currentQueueIndex = 0;
     let currentTrack = null;
-    let playedSongNames = new Set();  // 播過的歌名黑名單（永遠不再重複播放）
+    let playedSongNames = new Set();
     let currentSeedArtist = "周杰倫";
-    let isFetchingMore = false;      // 避免重複發送請求
+    let isFetchingMore = false;
 
-    // 關聯推薦關鍵字種子庫（當前歌手播差不多時，自動發散推薦同風格歌曲）
+    // 關聯推薦種子庫
     const styleSeeds = ["周杰倫", "林俊傑", "陳奕迅", "告五人", "五月天", "鄧紫棋", "李榮浩", "薛之謙", "張惠妹", "熱門流行金曲"];
     let seedIndex = 0;
 
@@ -474,7 +573,7 @@
       container.classList.remove("playing");
     });
 
-    // 核心演算法：一首歌結束，自動跳下一首，並檢查是否需要動態補貨
+    // 播完自動播下一首，並檢查動態補歌
     audio.addEventListener("ended", () => {
       playNextTrack();
     });
@@ -484,14 +583,12 @@
 
       currentQueueIndex++;
 
-      // 如果快聽完了（剩下最後 3 首），自動在背景向外抓取更多新歌
       if (currentQueueIndex >= smartQueue.length - 3) {
         fetchNextBatchSongs();
       }
 
-      // 如果真的播到了最後一首且還在等新歌，等待一下再播
       if (currentQueueIndex >= smartQueue.length) {
-        showToast("正在為您探索下一首關聯好歌...", false);
+        showToast("正在探索下一首好歌...", false);
         await fetchNextBatchSongs();
       }
 
@@ -513,19 +610,15 @@
       const track = smartQueue[index];
       const artist = getArtistName(track);
       
-      // 標記為已播放
       playedSongNames.add(cleanName(track.name));
-
       playAudio(track.id, track.name, artist, track.pic, track.url, 0);
     }
 
-    // 核心：動態向外探索並補入新歌
     async function fetchNextBatchSongs() {
       if (isFetchingMore) return;
       isFetchingMore = true;
 
       try {
-        // 輪流切換推薦種子：目前歌手 ➔ 同風格歌手 ➔ 流行熱榜
         let queryWord = currentSeedArtist;
         if (seedIndex > 0) {
           queryWord = styleSeeds[seedIndex % styleSeeds.length];
@@ -539,7 +632,6 @@
         const freshSongs = [];
         for (const s of candidateSongs) {
           const sKey = cleanName(s.name);
-          // 只要之前沒播過、不在黑名單中，就加入佇列！
           if (!playedSongNames.has(sKey)) {
             playedSongNames.add(sKey);
             freshSongs.push(s);
@@ -608,7 +700,7 @@
         const pic = s.pic || "";
 
         item.innerHTML = `
-          <img class="result-thumb" src="${pic ? pic : 'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'44\' height=\'44\'%3E%3Crect width=\'100%25\' height=\'100%25\' fill=\'%23252836\'/%3E%3Ctext x=\'50%25\' y=\'50%25\' dominant-baseline=\'middle\' text-anchor=\'middle\' font-size=\'18\' fill=\'%23888\'%3E🎵%3C/text%3E%3C/svg%3E'}" loading="lazy" />
+          <img class="result-thumb" src="${pic ? pic : 'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'46\' height=\'46\'%3E%3Crect width=\'100%25\' height=\'100%25\' fill=\'%23f1f5f9\'/%3E%3Ctext x=\'50%25\' y=\'50%25\' dominant-baseline=\'middle\' text-anchor=\'middle\' font-size=\'20\' fill=\'%2394a3b8\'%3E🎵%3C/text%3E%3C/svg%3E'}" loading="lazy" />
           <div class="result-info">
             <div class="result-name">${escapeHtml(s.name)}</div>
             <div class="result-artist">${escapeHtml(artists)}</div>
@@ -626,25 +718,20 @@
       return track.artist || track.author || "熱門歌手";
     }
 
-    // 使用者在搜尋結果點擊一首新歌
     async function onSelectSong(song) {
       const artist = getArtistName(song);
       currentSeedArtist = artist.split('/')[0].trim() || "周杰倫";
       seedIndex = 0;
 
-      // 重置電台
       playedSongNames.clear();
       playedSongNames.add(cleanName(song.name));
 
       smartQueue = [song];
       currentQueueIndex = 0;
 
-      // 立即播放目前點擊的這首
       playAudio(song.id, song.name, artist, song.pic, song.url, 0);
-
-      // 馬上在背景拉入第一批不重複的關聯好歌
       await fetchNextBatchSongs();
-      showToast(`已啟動無限探索電台，永不重複！`, false);
+      showToast(`✨ 已為您啟動無限好歌探索！`, false);
     }
 
     function playAudio(id, name, artists, picUrl, playUrl, startTime = 0) {
@@ -679,7 +766,7 @@
           navigator.mediaSession.setActionHandler('pause', () => audio.pause());
         }
       }).catch(err => {
-        console.warn("Autoplay block notice:", err);
+        console.warn("Autoplay notice:", err);
         playBtn.innerText = "▶";
       });
     }
@@ -698,7 +785,7 @@
         navigator.share({ title: shareTitle, text: shareText, url: shareUrl }).catch(() => {});
       } else {
         navigator.clipboard.writeText(shareUrl).then(() => {
-          showToast(`✅ 已複製！從 ${formatTime(curSec)} 開始聽`);
+          showToast(`✅ 已複製分享網址（從 ${formatTime(curSec)} 開始）`);
         }).catch(() => prompt("請長按複製分享網址：", shareUrl));
       }
     }
