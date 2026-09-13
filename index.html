@@ -11,7 +11,7 @@
     :root {
       --primary: #4f46e5;
       --primary-hover: #4338ca;
-      --accent: #ec4899;
+      --accent-pink: #ec4899;
       --bg-gradient: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
       --card-bg: rgba(255, 255, 255, 0.92);
       --card-border: rgba(226, 232, 240, 0.85);
@@ -71,7 +71,6 @@
       gap: 16px;
     }
 
-    /* 頂部列 */
     .header-bar {
       display: flex;
       align-items: center;
@@ -125,6 +124,34 @@
       flex-direction: column;
       align-items: center;
       text-align: center;
+      position: relative;
+    }
+
+    /* 愛心收藏按鈕 (播放卡片內) */
+    .btn-fav-toggle {
+      position: absolute;
+      top: 18px;
+      right: 18px;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 1.1rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      transition: transform 0.15s ease;
+    }
+    .btn-fav-toggle:active {
+      transform: scale(0.88);
+    }
+    .btn-fav-toggle.active {
+      color: var(--accent-pink);
+      border-color: #fbcfe8;
+      background: #fff1f2;
     }
 
     /* CD 唱盤 */
@@ -132,7 +159,7 @@
       position: relative;
       width: 175px;
       height: 175px;
-      margin-bottom: 16px;
+      margin-bottom: 14px;
     }
     .disc-art {
       width: 100%;
@@ -165,7 +192,7 @@
       to { transform: rotate(360deg); }
     }
 
-    /* 頻譜波動畫布 */
+    /* 頻譜波動 */
     .spectrum-box {
       width: 100%;
       height: 28px;
@@ -199,7 +226,7 @@
       font-weight: 500;
     }
 
-    /* 進度滑桿 */
+    /* 進度條 */
     .progress-wrap {
       width: 100%;
       display: flex;
@@ -233,7 +260,7 @@
       box-shadow: 0 2px 6px rgba(79, 70, 229, 0.3);
     }
 
-    /* 控制列 */
+    /* 控制按鈕 */
     .ctrl-row {
       display: flex;
       align-items: center;
@@ -278,7 +305,6 @@
       transform: scale(0.94);
     }
 
-    /* 快捷分享小按鈕（卡片內建） */
     .btn-card-share {
       margin-top: 14px;
       background: transparent;
@@ -336,7 +362,32 @@
       transform: scale(0.96);
     }
 
-    /* 播放清單 */
+    /* 分頁切換 (探索 vs 我的最愛) */
+    .tabs-bar {
+      display: flex;
+      gap: 8px;
+      padding: 0 2px;
+    }
+    .tab-item {
+      flex: 1;
+      padding: 8px 12px;
+      border-radius: 12px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      text-align: center;
+      background: #ffffff;
+      border: 1px solid var(--card-border);
+      color: var(--text-sub);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .tab-item.active {
+      background: #1e1b4b;
+      color: #ffffff;
+      border-color: #1e1b4b;
+      box-shadow: 0 4px 12px rgba(30, 27, 75, 0.15);
+    }
+
     .list-header {
       display: flex;
       align-items: center;
@@ -410,7 +461,7 @@
       padding: 30px 12px;
     }
 
-    /* 底部懸浮分享大按鈕（支援手機 safe-area，高 z-index 保證絕對看得見） */
+    /* 底部分享大按鈕 */
     .bottom-bar {
       position: fixed;
       bottom: 0;
@@ -449,12 +500,14 @@
       transform: scale(0.98);
     }
 
-    /* Toast 通知 */
+    /* 徹底隱藏與退回的 Toast */
     .toast-pill {
       position: fixed;
       top: 20px;
       left: 50%;
-      transform: translateX(-50%) translateY(-70px);
+      transform: translate(-50%, -200%);
+      opacity: 0;
+      visibility: hidden;
       background: #1e1b4b;
       color: #ffffff;
       font-size: 0.85rem;
@@ -462,12 +515,14 @@
       padding: 10px 20px;
       border-radius: 99px;
       box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
-      transition: transform 0.3s ease;
+      transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
       z-index: 1000;
       pointer-events: none;
     }
     .toast-pill.show {
-      transform: translateX(-50%) translateY(0);
+      transform: translate(-50%, 0);
+      opacity: 1;
+      visibility: visible;
     }
   </style>
 </head>
@@ -486,14 +541,18 @@
       <div class="live-status">背景播放</div>
     </div>
 
-    <!-- 主播放面板 -->
+    <!-- 主播放卡片 -->
     <div class="main-player-card" id="playerCard">
+      <!-- 收藏按鈕 -->
+      <button class="btn-fav-toggle" id="favToggleBtn" onclick="toggleCurrentFavorite()" title="加入我的最愛">
+        <span id="favIcon">🤍</span>
+      </button>
+
       <div class="disc-container">
         <img id="discCover" class="disc-art" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Crect width='100%25' height='100%25' fill='%23f1f5f9'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-size='48' fill='%23cbd5e1'%3E💿%3C/text%3E%3C/svg%3E" alt="Cover" />
         <div class="disc-core"></div>
       </div>
 
-      <!-- 動態音訊波形 -->
       <div class="spectrum-box">
         <canvas id="spectrumCanvas" width="240" height="28"></canvas>
       </div>
@@ -515,7 +574,6 @@
         <button class="btn-step" onclick="playNext()" title="下一首">⏭</button>
       </div>
 
-      <!-- 卡片內建快捷分享鍵（雙重保證絕對點得到） -->
       <button class="btn-card-share" onclick="handleShare()">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="18" cy="5" r="3"></circle>
@@ -536,7 +594,12 @@
       <button class="btn-submit-search" onclick="doSearch()">搜尋</button>
     </div>
 
-    <!-- 清單標頭 -->
+    <!-- 分頁切換列 -->
+    <div class="tabs-bar">
+      <div class="tab-item active" id="tabExplore" onclick="switchTab('explore')">🔍 搜尋探索</div>
+      <div class="tab-item" id="tabFavs" onclick="switchTab('favorites')">❤️ 我的最愛 (<span id="favCount">0</span>)</div>
+    </div>
+
     <div class="list-header">
       <span id="listTitle">播放清單</span>
       <span id="listCount">0 首歌曲</span>
@@ -576,14 +639,94 @@
     const listTitle = document.getElementById("listTitle");
     const listCount = document.getElementById("listCount");
     const toast = document.getElementById("toast");
+    const favToggleBtn = document.getElementById("favToggleBtn");
+    const favIcon = document.getElementById("favIcon");
+    const favCountSpan = document.getElementById("favCount");
+    const tabExplore = document.getElementById("tabExplore");
+    const tabFavs = document.getElementById("tabFavs");
     const canvas = document.getElementById("spectrumCanvas");
     const ctx = canvas.getContext("2d");
 
     let currentPlaylist = [];
     let currentIndex = -1;
     let currentTrack = null;
+    let currentTab = "explore";
+    let exploreBackupList = [];
 
-    // 波形渲染引擎
+    // --- 我的最愛 (LocalStorage) ---
+    function getFavorites() {
+      try {
+        return JSON.parse(localStorage.getItem("dinomusic_favs") || "[]");
+      } catch (e) {
+        return [];
+      }
+    }
+
+    function saveFavorites(list) {
+      localStorage.setItem("dinomusic_favs", JSON.stringify(list));
+      updateFavUI();
+    }
+
+    function isCurrentTrackFavorited() {
+      if (!currentTrack) return false;
+      const favs = getFavorites();
+      return favs.some(f => f.id === currentTrack.id);
+    }
+
+    function updateFavUI() {
+      const favs = getFavorites();
+      favCountSpan.innerText = favs.length;
+      if (isCurrentTrackFavorited()) {
+        favToggleBtn.classList.add("active");
+        favIcon.innerText = "❤️";
+      } else {
+        favToggleBtn.classList.remove("active");
+        favIcon.innerText = "🤍";
+      }
+    }
+
+    function toggleCurrentFavorite() {
+      if (!currentTrack) {
+        showToast("⚠️ 請先點選一首歌曲播放！");
+        return;
+      }
+      let favs = getFavorites();
+      const idx = favs.findIndex(f => f.id === currentTrack.id);
+      if (idx > -1) {
+        favs.splice(idx, 1);
+        showToast("💔 已從「我的最愛」移除");
+      } else {
+        favs.unshift(currentTrack);
+        showToast("💖 已成功加入「我的最愛」！");
+      }
+      saveFavorites(favs);
+      if (currentTab === "favorites") {
+        currentPlaylist = favs;
+        renderListUI();
+      }
+    }
+
+    function switchTab(tab) {
+      currentTab = tab;
+      if (tab === "explore") {
+        tabExplore.classList.add("active");
+        tabFavs.classList.remove("active");
+        currentPlaylist = exploreBackupList;
+        listTitle.innerText = "搜尋探索";
+        listCount.innerText = `${currentPlaylist.length} 首歌曲`;
+        renderListUI();
+      } else {
+        tabFavs.classList.add("active");
+        tabExplore.classList.remove("active");
+        const favs = getFavorites();
+        currentPlaylist = favs;
+        listTitle.innerText = "我的最愛收藏庫";
+        listCount.innerText = `${favs.length} 首收藏`;
+        renderListUI();
+      }
+    }
+
+    // --- 波形繪製 ---
     function drawSpectrum() {
       requestAnimationFrame(drawSpectrum);
       ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -618,11 +761,13 @@
 
     function togglePlay() {
       if (!audio.src) {
-        showToast("請先點選一首歌曲！");
+        showToast("請先選擇一首歌曲！");
         return;
       }
       if (audio.paused) {
-        audio.play();
+        audio.play().catch(e => {
+          showToast("點擊即可開始播放！");
+        });
       } else {
         audio.pause();
       }
@@ -659,43 +804,48 @@
     function playByIndex(idx) {
       if (idx < 0 || idx >= currentPlaylist.length) return;
       currentIndex = idx;
-      playTrack(currentPlaylist[idx]);
+      playTrack(currentPlaylist[idx], 0, true);
       highlightCurrentRow();
     }
 
-    function playTrack(track, startTime = 0) {
+    function playTrack(track, startTime = 0, shouldAutoPlay = true) {
       currentTrack = track;
       trackTitle.innerText = track.name;
       trackArtist.innerText = track.artist;
       if (track.pic) discCover.src = track.pic;
-
-      playToggleBtn.innerText = "⏳";
+      updateFavUI();
 
       const streamUrl = track.url || `https://api.qijieya.cn/meting/?type=url&id=${track.id}`;
       audio.src = streamUrl;
 
-      if (startTime > 0) audio.currentTime = startTime;
+      if (startTime > 0) {
+        audio.currentTime = startTime;
+      }
 
-      audio.play().then(() => {
-        playToggleBtn.innerText = "⏸";
-        playerCard.classList.add("playing");
+      if (shouldAutoPlay) {
+        playToggleBtn.innerText = "⏳";
+        audio.play().then(() => {
+          playToggleBtn.innerText = "⏸";
+          playerCard.classList.add("playing");
 
-        if ('mediaSession' in navigator) {
-          navigator.mediaSession.metadata = new MediaMetadata({
-            title: track.name,
-            artist: track.artist,
-            artwork: track.pic ? [{ src: track.pic }] : []
-          });
-
-          navigator.mediaSession.setActionHandler('nexttrack', () => playNext());
-          navigator.mediaSession.setActionHandler('previoustrack', () => playPrev());
-          navigator.mediaSession.setActionHandler('play', () => audio.play());
-          navigator.mediaSession.setActionHandler('pause', () => audio.pause());
-        }
-      }).catch(err => {
-        console.warn("Autoplay notice:", err);
+          if ('mediaSession' in navigator) {
+            navigator.mediaSession.metadata = new MediaMetadata({
+              title: track.name,
+              artist: track.artist,
+              artwork: track.pic ? [{ src: track.pic }] : []
+            });
+            navigator.mediaSession.setActionHandler('nexttrack', () => playNext());
+            navigator.mediaSession.setActionHandler('previoustrack', () => playPrev());
+            navigator.mediaSession.setActionHandler('play', () => audio.play());
+            navigator.mediaSession.setActionHandler('pause', () => audio.pause());
+          }
+        }).catch(err => {
+          playToggleBtn.innerText = "▶";
+          showToast("點擊 ▶ 即可開始收聽！");
+        });
+      } else {
         playToggleBtn.innerText = "▶";
-      });
+      }
     }
 
     function highlightCurrentRow() {
@@ -729,6 +879,10 @@
       const q = searchInput.value.trim();
       if (!q) return;
 
+      if (currentTab !== "explore") {
+        switchTab("explore");
+      }
+
       songsContainer.innerHTML = `<div class="placeholder-msg">正在尋找「${escapeHtml(q)}」...</div>`;
 
       try {
@@ -745,6 +899,7 @@
         }));
 
         currentPlaylist = songs;
+        exploreBackupList = songs;
         currentIndex = -1;
         listTitle.innerText = `搜尋結果：${q}`;
         listCount.innerText = `${songs.length} 首歌曲`;
@@ -759,9 +914,9 @@
       const selected = currentPlaylist[clickedIndex];
       const mainArtist = selected.artist.split('/')[0].trim();
 
-      playTrack(selected);
+      playTrack(selected, 0, true);
 
-      if (mainArtist && mainArtist !== "未知歌手") {
+      if (currentTab === "explore" && mainArtist && mainArtist !== "未知歌手") {
         try {
           const res = await fetch(`${API_BASE}/search?keywords=${encodeURIComponent(mainArtist)}`);
           const json = await res.json();
@@ -786,12 +941,13 @@
           }
 
           currentPlaylist = uniqueList;
+          exploreBackupList = uniqueList;
           currentIndex = 0;
           listTitle.innerText = `電台：${mainArtist}`;
           listCount.innerText = `${uniqueList.length} 首代表作`;
           renderListUI();
           highlightCurrentRow();
-          showToast(`✨ 已排定《${mainArtist}》全套代表作！`);
+          showToast(`✨ 已排定《${mainArtist}》代表作！`);
           return;
         } catch (e) {
           console.warn("自動排定電台失敗", e);
@@ -804,7 +960,7 @@
 
     function renderListUI() {
       if (currentPlaylist.length === 0) {
-        songsContainer.innerHTML = `<div class="placeholder-msg">找不到相符歌曲</div>`;
+        songsContainer.innerHTML = `<div class="placeholder-msg">${currentTab === 'favorites' ? '尚無收藏歌曲，點擊唱片右上角 ❤️ 即可加入！' : '找不到相符歌曲'}</div>`;
         return;
       }
       songsContainer.innerHTML = "";
@@ -873,7 +1029,7 @@
     function showToast(msg) {
       toast.innerText = msg;
       toast.classList.add("show");
-      setTimeout(() => toast.classList.remove("show"), 3000);
+      setTimeout(() => toast.classList.remove("show"), 2800);
     }
 
     function formatTime(sec) {
@@ -889,8 +1045,10 @@
       }[m]));
     }
 
-    // 還原分享歌曲與秒數
+    // 頁面初始化與好友分享還原處理
     window.addEventListener("load", () => {
+      updateFavUI();
+
       const p = new URLSearchParams(window.location.search);
       const id = p.get("id");
       if (id) {
@@ -904,13 +1062,30 @@
         const startTime = parseFloat(p.get("t")) || 0;
 
         currentPlaylist = [sharedTrack];
+        exploreBackupList = [sharedTrack];
         currentIndex = 0;
-        listTitle.innerText = "來自好友分享";
+        listTitle.innerText = "好友分享歌曲";
         listCount.innerText = "1 首歌曲";
 
         renderListUI();
-        playTrack(sharedTrack, startTime);
-        showToast(`🎶 正在從 ${formatTime(startTime)} 播放分享歌曲！`);
+
+        // 預先載入但不強行自動觸發 audio.play()（防止手機瀏覽器阻擋）
+        playTrack(sharedTrack, startTime, false);
+        showToast(`🎶 點擊 ▶ 即可從 ${formatTime(startTime)} 開始收聽！`);
+
+        // 為好友提供「點擊畫面任意處立即起播」的極佳體驗
+        const autoStartOnce = () => {
+          if (audio.paused) {
+            audio.play().then(() => {
+              playToggleBtn.innerText = "⏸";
+              playerCard.classList.add("playing");
+            }).catch(() => {});
+          }
+          window.removeEventListener("click", autoStartOnce);
+          window.removeEventListener("touchend", autoStartOnce);
+        };
+        window.addEventListener("click", autoStartOnce, { once: true });
+        window.addEventListener("touchend", autoStartOnce, { once: true });
       }
     });
   </script>
