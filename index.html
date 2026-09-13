@@ -190,7 +190,7 @@
       background: var(--pill-bg);
     }
 
-    /* 內嵌瀏覽器專屬提示條（點擊無痛移交原生瀏覽器以達成背景聽歌） */
+    /* 內嵌瀏覽器提示條 */
     .inapp-banner {
       display: none;
       background: linear-gradient(135deg, #4f46e5, #ec4899);
@@ -218,6 +218,93 @@
       align-items: center;
       text-align: center;
       position: relative;
+    }
+
+    /* --- 吉祥物恐龍互動樣式 --- */
+    .mascot-area {
+      position: absolute;
+      top: 14px;
+      left: 18px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      user-select: none;
+      z-index: 10;
+    }
+    .mascot-dino-svg {
+      width: 44px;
+      height: 44px;
+      transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .mascot-area:active .mascot-dino-svg {
+      transform: scale(1.18) rotate(-6deg);
+    }
+
+    /* 律動與打呼動畫 */
+    .playing .dino-body {
+      animation: dinoBop 0.6s ease-in-out infinite alternate;
+      transform-origin: bottom center;
+    }
+    .playing .dino-headphone {
+      animation: headphoneBeat 0.6s ease-in-out infinite alternate;
+      transform-origin: center;
+    }
+    .dino-note {
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    .playing .dino-note {
+      opacity: 1;
+      animation: floatNote 1.4s ease-in-out infinite;
+    }
+    .dino-sleep {
+      opacity: 1;
+      animation: sleepZ 2s ease-in-out infinite;
+    }
+    .playing .dino-sleep {
+      opacity: 0;
+    }
+
+    @keyframes dinoBop {
+      0% { transform: translateY(0) scaleY(1); }
+      100% { transform: translateY(-4px) scaleY(1.04) rotate(2deg); }
+    }
+    @keyframes headphoneBeat {
+      0% { transform: scale(1); }
+      100% { transform: scale(1.08); }
+    }
+    @keyframes floatNote {
+      0% { transform: translateY(0) scale(0.7); opacity: 0; }
+      50% { opacity: 0.9; }
+      100% { transform: translateY(-10px) translateX(6px) scale(1.1); opacity: 0; }
+    }
+    @keyframes sleepZ {
+      0% { transform: translateY(2px) scale(0.8); opacity: 0.2; }
+      50% { transform: translateY(-4px) scale(1.05); opacity: 0.8; }
+      100% { transform: translateY(-8px) scale(1.2); opacity: 0; }
+    }
+
+    .dino-bubble {
+      position: absolute;
+      left: 48px;
+      top: -6px;
+      background: var(--btn-bg);
+      color: var(--btn-text);
+      font-size: 0.74rem;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 99px;
+      white-space: nowrap;
+      pointer-events: none;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+      opacity: 0;
+      transform: scale(0.8) translateY(6px);
+      transition: all 0.25s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+    }
+    .dino-bubble.show {
+      opacity: 1;
+      transform: scale(1) translateY(0);
     }
 
     .btn-fav-toggle {
@@ -250,6 +337,7 @@
       position: relative;
       width: 175px;
       height: 175px;
+      margin-top: 14px;
       margin-bottom: 14px;
     }
     .disc-art {
@@ -571,7 +659,6 @@
       padding: 30px 12px;
     }
 
-    /* 歷史紀錄彈窗 */
     .history-modal-overlay {
       position: fixed;
       top: 0;
@@ -737,13 +824,53 @@
       </div>
     </div>
 
-    <!-- 內嵌瀏覽器環境專屬指引條 -->
+    <!-- 內嵌瀏覽器提示條 -->
     <div id="inappBanner" class="inapp-banner" onclick="openInNativeBrowser()">
       📲 點此以系統瀏覽器（Safari/Chrome）開啟！
     </div>
 
     <!-- 主播放卡片 -->
     <div class="main-player-card" id="playerCard">
+      <!-- 恐龍吉祥物互動區 -->
+      <div class="mascot-area" onclick="onTapDino()" title="點我摸摸恐龍！">
+        <svg class="mascot-dino-svg" viewBox="0 0 64 64" fill="none">
+          <!-- 浮動音符 (播放時起伏) -->
+          <g class="dino-note">
+            <text x="44" y="16" font-size="12" fill="#ec4899">🎵</text>
+          </g>
+          <!-- 打呼氣泡 (暫停時浮現) -->
+          <g class="dino-sleep">
+            <text x="40" y="15" font-size="11" font-weight="bold" fill="#64748b">z Z</text>
+          </g>
+          <!-- 恐龍身體 -->
+          <g class="dino-body">
+            <!-- 尾巴 -->
+            <path d="M12 44C8 44 4 48 6 52C8 54 14 52 18 48Z" fill="#10b981"/>
+            <!-- 身體與頭 -->
+            <path d="M16 48C14 42 16 30 24 24C28 20 34 20 40 22C46 24 48 30 48 36C48 42 44 50 36 52C28 54 20 52 16 48Z" fill="#10b981"/>
+            <!-- 肚皮 -->
+            <path d="M26 34C28 30 34 30 38 34C40 38 38 46 34 48C30 50 26 44 26 34Z" fill="#a7f3d0"/>
+            <!-- 背鰭 -->
+            <polygon points="20,24 23,19 26,24" fill="#059669"/>
+            <polygon points="15,31 18,26 21,31" fill="#059669"/>
+            <!-- 眼睛 -->
+            <circle id="dinoEye" cx="38" cy="28" r="2.5" fill="#064e3b"/>
+            <!-- 腮紅 -->
+            <circle cx="34" cy="34" r="2" fill="#f472b6" opacity="0.8"/>
+            <!-- 腳腳 -->
+            <rect x="22" y="50" width="4" height="5" rx="2" fill="#059669"/>
+            <rect x="32" y="50" width="4" height="5" rx="2" fill="#059669"/>
+          </g>
+          <!-- 耳機 (播放時呼吸震動) -->
+          <g class="dino-headphone">
+            <path d="M26 26C26 18 44 18 44 26" stroke="#6366f1" stroke-width="3" stroke-linecap="round"/>
+            <rect x="23" y="24" width="4" height="8" rx="2" fill="#4f46e5"/>
+            <rect x="43" y="24" width="4" height="8" rx="2" fill="#4f46e5"/>
+          </g>
+        </svg>
+        <div class="dino-bubble" id="dinoBubble">吼～🎵</div>
+      </div>
+
       <button class="btn-fav-toggle" id="favToggleBtn" onclick="toggleCurrentFavorite()" title="加入我的最愛">
         <span id="favIcon">🤍</span>
       </button>
@@ -859,6 +986,7 @@
     const darkModeIcon = document.getElementById("darkModeIcon");
     const darkModeText = document.getElementById("darkModeText");
     const inappBanner = document.getElementById("inappBanner");
+    const dinoBubble = document.getElementById("dinoBubble");
     const canvas = document.getElementById("spectrumCanvas");
     const ctx = canvas.getContext("2d");
 
@@ -868,7 +996,34 @@
     let currentTab = "explore";
     let exploreBackupList = [];
 
-    // --- 內嵌瀏覽器偵測與無痛呼叫 ---
+    // 恐龍彩蛋對話列表
+    const dinoQuotes = [
+      "吼～這首真抓耳！🎵",
+      "恐龍也愛聽音樂 🦕",
+      "戴上耳機，專注世界 ✨",
+      "這節奏超讚！點頭中",
+      "再摸我就要切下一首囉 😆"
+    ];
+    let tapCount = 0;
+
+    function onTapDino() {
+      tapCount++;
+      const randomQuote = dinoQuotes[Math.floor(Math.random() * dinoQuotes.length)];
+      dinoBubble.innerText = randomQuote;
+      dinoBubble.classList.add("show");
+      setTimeout(() => dinoBubble.classList.remove("show"), 2200);
+
+      // 連續點 3 次小恐龍，自動隨機切下一首（驚喜彩蛋）
+      if (tapCount >= 3) {
+        tapCount = 0;
+        if (currentPlaylist.length > 1) {
+          showToast("🦕 小恐龍幫你隨機換了一首歌！");
+          const randIdx = Math.floor(Math.random() * currentPlaylist.length);
+          playByIndex(randIdx);
+        }
+      }
+    }
+
     function isInAppBrowser() {
       const ua = navigator.userAgent || navigator.vendor || window.opera;
       return /Line|Instagram|FB_IAB|FBAN|FBAV/i.test(ua);
@@ -878,17 +1033,14 @@
       const curUrl = window.location.href;
       const ua = navigator.userAgent.toLowerCase();
 
-      // Android: 使用 intent 協定直接啟動系統 Chrome
       if (/android/i.test(ua)) {
         const noScheme = curUrl.replace(/^https?:\/\//, '');
         window.location.href = `intent://${noScheme}#Intent;scheme=https;package=com.android.chrome;end`;
       } else {
-        // iOS: 提示點擊右上角三點
         showToast("👉 請點擊畫面右上角「•••」，選擇「以 Safari 開啟」即可背景播放！");
       }
     }
 
-    // --- 選單與深色模式 ---
     function toggleMenu() {
       dropdownMenu.classList.toggle("show");
     }
@@ -917,7 +1069,6 @@
       }
     }
 
-    // --- 歷史紀錄 (LocalStorage) ---
     function getHistory() {
       try {
         return JSON.parse(localStorage.getItem("dinomusic_history") || "[]");
@@ -976,7 +1127,6 @@
       });
     }
 
-    // --- 我的最愛 (LocalStorage) ---
     function getFavorites() {
       try {
         return JSON.parse(localStorage.getItem("dinomusic_favs") || "[]");
@@ -1053,7 +1203,6 @@
       }
     }
 
-    // --- 音訊頻譜波動 ---
     function drawSpectrum() {
       requestAnimationFrame(drawSpectrum);
       ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -1335,7 +1484,6 @@
       return (raw || "").replace(/\(.*?\)|\[.*?\]|（.*?）/g, '').trim().toLowerCase();
     }
 
-    // 核心升級：自動附帶 LINE 免跳出參數 openExternalBrowser=1
     function handleShare() {
       if (!currentTrack) {
         showToast("⚠️ 請先點選一首歌曲播放！");
@@ -1349,7 +1497,7 @@
         artist: currentTrack.artist,
         pic: currentTrack.pic || '',
         stream: encodeURIComponent(reliableStreamUrl),
-        openExternalBrowser: "1" // 關鍵參數：在 LINE 點開時直接呼叫手機 Safari/Chrome
+        openExternalBrowser: "1"
       });
 
       const shareUrl = `${window.location.origin}${window.location.pathname}?${params.toString()}`;
@@ -1385,7 +1533,6 @@
     }
 
     window.addEventListener("load", () => {
-      // 偵測是否在 Instagram/FB 等 App 內打開
       if (isInAppBrowser()) {
         inappBanner.style.display = "block";
       }
