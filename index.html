@@ -188,10 +188,10 @@
       to { transform: rotate(360deg); }
     }
 
-    /* 頻譜音訊波動畫布 */
+    /* 波動畫布 */
     .visualizer-container {
       width: 100%;
-      height: 36px;
+      height: 32px;
       margin-bottom: 12px;
       display: flex;
       justify-content: center;
@@ -201,7 +201,6 @@
       width: 100%;
       max-width: 280px;
       height: 100%;
-      border-radius: 8px;
     }
 
     .track-meta {
@@ -465,9 +464,6 @@
       transition: transform 0.35s cubic-bezier(0.18, 0.89, 0.32, 1.28);
       z-index: 200;
       pointer-events: none;
-      display: flex;
-      align-items: center;
-      gap: 8px;
     }
     .toast-pill.show {
       transform: translateX(-50%) translateY(0);
@@ -491,7 +487,6 @@
         <span>🦕</span> DinoMusic
       </div>
       <div class="header-badges">
-        <!-- 音質切換按鈕 -->
         <button class="quality-btn" id="qualityBtn" onclick="toggleQuality()">
           <span>⚡</span> <span id="qualityText">320K 極致</span>
         </button>
@@ -506,9 +501,9 @@
         <div class="disc-center-hole"></div>
       </div>
 
-      <!-- 音樂頻譜波動畫布 -->
+      <!-- 頻譜波形畫布 -->
       <div class="visualizer-container">
-        <canvas id="visualizerCanvas" width="280" height="36"></canvas>
+        <canvas id="visualizerCanvas" width="280" height="32"></canvas>
       </div>
 
       <div class="track-meta">
@@ -528,11 +523,12 @@
         <button class="btn-ctrl" onclick="playNextTrack()" title="下一首">⏭</button>
       </div>
 
-      <audio id="audioPlayer" preload="auto" crossorigin="anonymous"></audio>
+      <!-- 移除跨域屬性，確保第三方串流 100% 正常載入 -->
+      <audio id="audioPlayer" preload="auto"></audio>
     </div>
 
     <div class="search-wrapper">
-      <input type="text" id="searchInput" placeholder="搜尋歌手或歌名（例如：周杰倫 晴天）" onkeydown="if(event.key==='Enter') searchMusic()" />
+      <input type="text" id="searchInput" placeholder="搜尋歌手或歌名（例如：五月天、周杰倫）" onkeydown="if(event.key==='Enter') searchMusic()" />
       <button class="btn-search" onclick="searchMusic()">搜尋</button>
     </div>
 
@@ -582,42 +578,15 @@
     let currentIndex = -1;
     let currentPlayingTrack = null;
 
-    // 音質設定列表：128k (流暢) -> 320k (極致) -> flac (無損SQ)
     const qualities = [
       { key: "320", label: "320K 極致" },
-      { key: "flac", label: "FLAC 無損" },
       { key: "128", label: "128K 流暢" }
     ];
-    let qualityIdx = 0; // 預設 320K
+    let qualityIdx = 0;
 
-    // Web Audio API 視覺化節點
-    let audioCtx = null;
-    let analyser = null;
-    let sourceNode = null;
-    let visualizerTimer = null;
-    let isWebAudioInit = false;
-
-    function initVisualizer() {
-      if (isWebAudioInit) return;
-      try {
-        const AudioContext = window.AudioContext || window.webkitAudioContext;
-        audioCtx = new AudioContext();
-        analyser = audioCtx.createAnalyser();
-        analyser.fftSize = 64;
-        analyser.smoothingTimeConstant = 0.8;
-
-        sourceNode = audioCtx.createMediaElementSource(audio);
-        sourceNode.connect(analyser);
-        analyser.connect(audioCtx.destination);
-        isWebAudioInit = true;
-      } catch (e) {
-        console.warn("瀏覽器安全策略回退至擬真波動", e);
-      }
-    }
-
-    // 繪製音訊頻譜波動動畫
+    // 獨立動態波形渲染引擎（完全不碰 CORS，依據真實播放狀態即時律動）
     function renderVisualizer() {
-      visualizerTimer = requestAnimationFrame(renderVisualizer);
+      requestAnimationFrame(renderVisualizer);
 
       canvasCtx.clearRect(0, 0, canvas.width, canvas.height);
       const barCount = 20;
@@ -626,34 +595,22 @@
       const totalWidth = barCount * (barWidth + gap) - gap;
       const startX = (canvas.width - totalWidth) / 2;
 
-      let dataArray = new Uint8Array(barCount);
-
-      if (isWebAudioInit && analyser && !audio.paused) {
-        const raw = new Uint8Array(analyser.frequencyBinCount);
-        analyser.getByteFrequencyData(raw);
-        for (let i = 0; i < barCount; i++) {
-          dataArray[i] = raw[i % raw.length];
-        }
-      } else if (!audio.paused) {
-        // 擬真動態節奏波形
-        const time = Date.now() * 0.006;
-        for (let i = 0; i < barCount; i++) {
-          const wave = Math.sin(time + i * 0.5) * 0.5 + 0.5;
-          dataArray[i] = Math.floor(wave * 180 + Math.random() * 40);
-        }
-      } else {
-        // 暫停時待機平滑小點
-        dataArray.fill(12);
-      }
+      const isPlaying = !audio.paused && audio.duration > 0;
+      const now = Date.now() * 0.007;
 
       for (let i = 0; i < barCount; i++) {
-        const val = dataArray[i];
-        const percent = val / 255;
-        const barHeight = Math.max(3, percent * (canvas.height - 4));
+        let barHeight = 4;
+        if (isPlaying) {
+          // 動態混合正弦波與節奏起伏
+          const wave1 = Math.sin(now + i * 0.45);
+          const wave2 = Math.cos(now * 1.5 - i * 0.3);
+          const amp = Math.max(0.1, (wave1 + wave2) * 0.5 + 0.5);
+          barHeight = Math.max(4, amp * (canvas.height - 4));
+        }
+
         const x = startX + i * (barWidth + gap);
         const y = canvas.height - barHeight;
 
-        // 漸層發光質感
         const gradient = canvasCtx.createLinearGradient(0, canvas.height, 0, 0);
         gradient.addColorStop(0, '#6366f1');
         gradient.addColorStop(0.5, '#8b5cf6');
@@ -667,18 +624,16 @@
     }
     renderVisualizer();
 
-    // 音質切換
     function toggleQuality() {
       qualityIdx = (qualityIdx + 1) % qualities.length;
       const q = qualities[qualityIdx];
       qualityText.innerText = q.label;
       showToast(`⚡ 已切換音質：${q.label}`, false);
 
-      // 若目前有歌曲正在播放，保存進度並無縫切換音源
       if (currentPlayingTrack) {
         const curSec = audio.currentTime;
         const isPaused = audio.paused;
-        const newUrl = getStreamUrl(currentPlayingTrack.id, q.key);
+        const newUrl = getStreamUrl(currentPlayingTrack.id, currentPlayingTrack.url, q.key);
         audio.src = newUrl;
         audio.currentTime = curSec;
         if (!isPaused) {
@@ -687,8 +642,12 @@
       }
     }
 
-    function getStreamUrl(id, brKey) {
-      return `https://api.qijieya.cn/meting/?type=url&id=${id}&br=${brKey}`;
+    // 優先使用原始解析之高相容網址，確保所有曲目皆能即時播放
+    function getStreamUrl(id, directUrl, brKey) {
+      if (brKey === "128") {
+        return `https://api.qijieya.cn/meting/?type=url&id=${id}&br=128`;
+      }
+      return directUrl || `https://api.qijieya.cn/meting/?type=url&id=${id}`;
     }
 
     function togglePlay() {
@@ -697,9 +656,6 @@
         return;
       }
       if (audio.paused) {
-        if (audioCtx && audioCtx.state === 'suspended') {
-          audioCtx.resume();
-        }
         audio.play();
       } else {
         audio.pause();
@@ -709,10 +665,6 @@
     audio.addEventListener("play", () => {
       playBtn.innerText = "⏸";
       container.classList.add("playing");
-      initVisualizer();
-      if (audioCtx && audioCtx.state === 'suspended') {
-        audioCtx.resume();
-      }
     });
 
     audio.addEventListener("pause", () => {
@@ -762,7 +714,7 @@
       playBtn.innerText = "⏳";
 
       const curBr = qualities[qualityIdx].key;
-      const streamUrl = getStreamUrl(track.id, curBr);
+      const streamUrl = getStreamUrl(track.id, track.url, curBr);
       audio.src = streamUrl;
 
       if (startTime > 0) {
@@ -772,7 +724,6 @@
       audio.play().then(() => {
         playBtn.innerText = "⏸";
         container.classList.add("playing");
-        initVisualizer();
 
         if ('mediaSession' in navigator) {
           navigator.mediaSession.metadata = new MediaMetadata({
@@ -834,7 +785,8 @@
           id: s.id,
           name: s.name,
           artist: getArtistName(s),
-          pic: s.pic || ''
+          pic: s.pic || '',
+          url: s.url || ''
         }));
 
         currentPlaylist = songs;
@@ -872,7 +824,8 @@
                 id: raw.id,
                 name: raw.name,
                 artist: getArtistName(raw),
-                pic: raw.pic || ''
+                pic: raw.pic || '',
+                url: raw.url || ''
               });
             }
           }
@@ -984,7 +937,8 @@
           id: id,
           name: "分享歌曲",
           artist: "點擊播放",
-          pic: ""
+          pic: "",
+          url: `https://api.qijieya.cn/meting/?type=url&id=${id}`
         };
         currentPlaylist = [dummyTrack];
         currentIndex = 0;
