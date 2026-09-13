@@ -10,12 +10,11 @@
   <style>
     :root {
       --primary: #6366f1;
-      --primary-soft: rgba(99, 102, 241, 0.12);
+      --primary-soft: rgba(99, 102, 241, 0.1);
       --accent: #ec4899;
-      --accent-coral: #f43f5e;
       --bg-main: #f8fafc;
-      --card-bg: rgba(255, 255, 255, 0.82);
-      --card-border: rgba(255, 255, 255, 0.9);
+      --card-bg: rgba(255, 255, 255, 0.85);
+      --card-border: rgba(255, 255, 255, 0.95);
       --card-shadow: 0 20px 40px -15px rgba(99, 102, 241, 0.12), 0 0 20px rgba(0, 0, 0, 0.03);
       --text-title: #0f172a;
       --text-sub: #64748b;
@@ -42,7 +41,6 @@
       position: relative;
     }
 
-    /* 柔和晨曦光斑背景 */
     .aurora-glow-1 {
       position: fixed;
       top: -120px;
@@ -65,17 +63,6 @@
       z-index: -1;
       pointer-events: none;
     }
-    .aurora-glow-3 {
-      position: fixed;
-      bottom: -80px;
-      left: 10%;
-      width: 350px;
-      height: 350px;
-      background: radial-gradient(circle, rgba(199, 210, 254, 0.45) 0%, rgba(240, 249, 255, 0) 70%);
-      filter: blur(50px);
-      z-index: -1;
-      pointer-events: none;
-    }
 
     .app-container {
       width: 100%;
@@ -85,7 +72,6 @@
       gap: 16px;
     }
 
-    /* 頂部標題 */
     .header-bar {
       display: flex;
       align-items: center;
@@ -102,9 +88,6 @@
       display: flex;
       align-items: center;
       gap: 8px;
-    }
-    .brand-title span {
-      font-size: 1.1rem;
     }
     .live-tag {
       font-size: 0.72rem;
@@ -129,7 +112,6 @@
       box-shadow: 0 0 6px #10b981;
     }
 
-    /* 主要播放器卡片 */
     .player-card {
       background: var(--card-bg);
       backdrop-filter: blur(28px);
@@ -141,7 +123,6 @@
       box-shadow: var(--card-shadow);
     }
 
-    /* 晨曦光感 CD 唱片 */
     .disc-wrapper {
       position: relative;
       width: 190px;
@@ -198,7 +179,6 @@
       font-weight: 500;
     }
 
-    /* 進度條 */
     .progress-container {
       display: flex;
       align-items: center;
@@ -220,7 +200,6 @@
       outline: none;
       -webkit-appearance: none;
       cursor: pointer;
-      position: relative;
     }
     .progress-bar::-webkit-slider-thumb {
       -webkit-appearance: none;
@@ -230,13 +209,8 @@
       background: #ffffff;
       border: 2px solid var(--primary);
       box-shadow: 0 2px 8px rgba(99, 102, 241, 0.35);
-      transition: transform 0.1s;
-    }
-    .progress-bar::-webkit-slider-thumb:active {
-      transform: scale(1.2);
     }
 
-    /* 控制按鈕 */
     .player-controls {
       display: flex;
       justify-content: center;
@@ -256,7 +230,6 @@
       align-items: center;
       justify-content: center;
       transition: all 0.2s;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.03);
     }
     .btn-ctrl:active {
       transform: scale(0.92);
@@ -281,7 +254,6 @@
       transform: scale(0.94);
     }
 
-    /* 搜尋欄 */
     .search-wrapper {
       display: flex;
       align-items: center;
@@ -320,7 +292,16 @@
       transform: scale(0.95);
     }
 
-    /* 搜尋結果清單 */
+    .section-label {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--text-sub);
+      padding: 0 6px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
     .results-container {
       background: var(--card-bg);
       backdrop-filter: blur(20px);
@@ -328,7 +309,7 @@
       border: 1px solid var(--card-border);
       border-radius: 24px;
       padding: 10px;
-      max-height: 290px;
+      max-height: 310px;
       overflow-y: auto;
       display: flex;
       flex-direction: column;
@@ -347,9 +328,12 @@
       border: 1px solid rgba(241, 245, 249, 0.8);
       transition: all 0.2s;
     }
-    .result-card:active {
-      transform: scale(0.98);
-      background: #f8fafc;
+    .result-card.active-playing {
+      background: #eff6ff;
+      border: 1.5px solid var(--primary);
+    }
+    .result-card.active-playing .result-name {
+      color: var(--primary);
     }
     .result-thumb {
       width: 46px;
@@ -358,7 +342,6 @@
       object-fit: cover;
       background: #f1f5f9;
       flex-shrink: 0;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
     }
     .result-info {
       flex: 1;
@@ -386,7 +369,6 @@
       padding: 28px 12px;
     }
 
-    /* 底部懸浮分享列 */
     .fixed-bottom-bar {
       position: fixed;
       bottom: 0;
@@ -418,13 +400,11 @@
       gap: 10px;
       cursor: pointer;
       box-shadow: 0 8px 22px rgba(99, 102, 241, 0.28);
-      transition: all 0.2s;
     }
     .btn-share-main:active {
       transform: scale(0.98);
     }
 
-    /* 提示膠囊 (Toast) */
     .toast-pill {
       position: fixed;
       top: 24px;
@@ -441,9 +421,6 @@
       transition: transform 0.35s cubic-bezier(0.18, 0.89, 0.32, 1.28);
       z-index: 200;
       pointer-events: none;
-      display: flex;
-      align-items: center;
-      gap: 8px;
     }
     .toast-pill.show {
       transform: translateX(-50%) translateY(0);
@@ -456,20 +433,17 @@
 </head>
 <body>
 
-  <!-- 晨曦透光光斑 -->
   <div class="aurora-glow-1"></div>
   <div class="aurora-glow-2"></div>
-  <div class="aurora-glow-3"></div>
 
   <div id="toast" class="toast-pill">✨ 已複製分享連結！</div>
 
   <div class="app-container">
-    <!-- 頂部列 -->
     <div class="header-bar">
       <div class="brand-title">
         <span>☀️</span> WaveSync
       </div>
-      <div class="live-tag">無限電台・背景播放</div>
+      <div class="live-tag">精準連播・背景播放</div>
     </div>
 
     <!-- 主播放面板 -->
@@ -499,19 +473,21 @@
       <audio id="audioPlayer" preload="auto"></audio>
     </div>
 
-    <!-- 搜尋框 -->
     <div class="search-wrapper">
-      <input type="text" id="searchInput" placeholder="搜尋喜愛的歌手或歌名（例如：周杰倫 晴天）" onkeydown="if(event.key==='Enter') searchMusic()" />
+      <input type="text" id="searchInput" placeholder="搜尋歌手或歌名（例如：周杰倫 晴天）" onkeydown="if(event.key==='Enter') searchMusic()" />
       <button class="btn-search" onclick="searchMusic()">搜尋</button>
     </div>
 
-    <!-- 歌曲結果清單 -->
+    <div class="section-label">
+      <span id="playlistTitle">播放清單</span>
+      <span id="playlistCount" style="font-weight:500; font-size:0.75rem;">共 0 首</span>
+    </div>
+
     <div class="results-container" id="resultsContainer">
       <div class="empty-state">在上方搜尋欄輸入歌名，立即聆聽 ✨</div>
     </div>
   </div>
 
-  <!-- 底部固定分享列 -->
   <div class="fixed-bottom-bar">
     <button class="btn-share-main" onclick="handleShare()">
       <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
@@ -537,23 +513,19 @@
     const durationText = document.getElementById("durationText");
     const searchInput = document.getElementById("searchInput");
     const resultsContainer = document.getElementById("resultsContainer");
+    const playlistTitle = document.getElementById("playlistTitle");
+    const playlistCount = document.getElementById("playlistCount");
     const toast = document.getElementById("toast");
 
-    // 核心資料結構（無限智慧探索佇列）
-    let smartQueue = [];
-    let currentQueueIndex = 0;
-    let currentTrack = null;
-    let playedSongNames = new Set();
-    let currentSeedArtist = "周杰倫";
-    let isFetchingMore = false;
-
-    // 關聯推薦種子庫
-    const styleSeeds = ["周杰倫", "林俊傑", "陳奕迅", "告五人", "五月天", "鄧紫棋", "李榮浩", "薛之謙", "張惠妹", "熱門流行金曲"];
-    let seedIndex = 0;
+    // 唯一的真理來源（Single Source of Truth）：
+    // 畫面顯示的清單就是實際播放的隊列，完全同步！
+    let currentPlaylist = [];
+    let currentIndex = -1;
+    let currentPlayingTrack = null;
 
     function togglePlay() {
       if (!audio.src) {
-        showToast("請先選擇一首歌曲！", true);
+        showToast("請先點選一首歌曲播放！", true);
         return;
       }
       if (audio.paused) {
@@ -573,86 +545,91 @@
       container.classList.remove("playing");
     });
 
-    // 播完自動播下一首，並檢查動態補歌
+    // 核心邏輯：播完順暢播下一首，若播完則循環回第一首
     audio.addEventListener("ended", () => {
       playNextTrack();
     });
 
-    async function playNextTrack() {
-      if (smartQueue.length === 0) return;
-
-      currentQueueIndex++;
-
-      if (currentQueueIndex >= smartQueue.length - 3) {
-        fetchNextBatchSongs();
+    function playNextTrack() {
+      if (currentPlaylist.length === 0) return;
+      let nextIdx = currentIndex + 1;
+      if (nextIdx >= currentPlaylist.length) {
+        nextIdx = 0;
       }
-
-      if (currentQueueIndex >= smartQueue.length) {
-        showToast("正在探索下一首好歌...", false);
-        await fetchNextBatchSongs();
-      }
-
-      playQueueItem(currentQueueIndex);
+      playTrackByIndex(nextIdx);
     }
 
     function playPrevTrack() {
-      if (smartQueue.length === 0) return;
-      if (currentQueueIndex > 0) {
-        currentQueueIndex--;
-        playQueueItem(currentQueueIndex);
-      } else {
-        showToast("已經是第一首囉！", false);
+      if (currentPlaylist.length === 0) return;
+      let prevIdx = currentIndex - 1;
+      if (prevIdx < 0) {
+        prevIdx = currentPlaylist.length - 1;
       }
+      playTrackByIndex(prevIdx);
     }
 
-    function playQueueItem(index) {
-      if (index < 0 || index >= smartQueue.length) return;
-      const track = smartQueue[index];
-      const artist = getArtistName(track);
-      
-      playedSongNames.add(cleanName(track.name));
-      playAudio(track.id, track.name, artist, track.pic, track.url, 0);
+    // 透過索引播放，保證資料與音訊一對一完全對齊
+    function playTrackByIndex(idx) {
+      if (idx < 0 || idx >= currentPlaylist.length) return;
+      currentIndex = idx;
+      const track = currentPlaylist[idx];
+      playTrackDirectly(track);
+      highlightActiveCard();
     }
 
-    async function fetchNextBatchSongs() {
-      if (isFetchingMore) return;
-      isFetchingMore = true;
+    function playTrackDirectly(track, startTime = 0) {
+      currentPlayingTrack = track;
 
-      try {
-        let queryWord = currentSeedArtist;
-        if (seedIndex > 0) {
-          queryWord = styleSeeds[seedIndex % styleSeeds.length];
-        }
-        seedIndex++;
-
-        const res = await fetch(`${API_BASE}/search?keywords=${encodeURIComponent(queryWord)}`);
-        const json = await res.json();
-        const candidateSongs = (json.result && json.result.songs) ? json.result.songs : [];
-
-        const freshSongs = [];
-        for (const s of candidateSongs) {
-          const sKey = cleanName(s.name);
-          if (!playedSongNames.has(sKey)) {
-            playedSongNames.add(sKey);
-            freshSongs.push(s);
-          }
-        }
-
-        if (freshSongs.length > 0) {
-          smartQueue.push(...freshSongs);
-        }
-      } catch (e) {
-        console.warn("補貨歌曲失敗", e);
-      } finally {
-        isFetchingMore = false;
+      // 1. 同步更新畫面資訊
+      trackTitle.innerText = track.name;
+      trackArtist.innerText = track.artist;
+      if (track.pic) {
+        cover.src = track.pic;
       }
+
+      playBtn.innerText = "⏳";
+
+      // 2. 確定專屬音訊網址（完全根據此曲目自身 ID）
+      const streamUrl = track.url || `https://api.qijieya.cn/meting/?type=url&id=${track.id}`;
+      audio.src = streamUrl;
+
+      if (startTime > 0) {
+        audio.currentTime = startTime;
+      }
+
+      audio.play().then(() => {
+        playBtn.innerText = "⏸";
+        container.classList.add("playing");
+
+        // 手機通知列與鎖定螢幕同步更新
+        if ('mediaSession' in navigator) {
+          navigator.mediaSession.metadata = new MediaMetadata({
+            title: track.name,
+            artist: track.artist,
+            artwork: track.pic ? [{ src: track.pic }] : []
+          });
+
+          navigator.mediaSession.setActionHandler('nexttrack', () => playNextTrack());
+          navigator.mediaSession.setActionHandler('previoustrack', () => playPrevTrack());
+          navigator.mediaSession.setActionHandler('play', () => audio.play());
+          navigator.mediaSession.setActionHandler('pause', () => audio.pause());
+        }
+      }).catch(err => {
+        console.warn("Autoplay notice:", err);
+        playBtn.innerText = "▶";
+      });
     }
 
-    function cleanName(raw) {
-      return (raw || "")
-        .replace(/\(.*?\)|\[.*?\]|（.*?）/g, '')
-        .trim()
-        .toLowerCase();
+    function highlightActiveCard() {
+      document.querySelectorAll(".result-card").forEach((card, i) => {
+        if (i === currentIndex) {
+          card.classList.add("active-playing");
+          // 自動滾動讓正在播放的曲目置中
+          card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        } else {
+          card.classList.remove("active-playing");
+        }
+      });
     }
 
     audio.addEventListener("timeupdate", () => {
@@ -680,33 +657,106 @@
       try {
         const res = await fetch(`${API_BASE}/search?keywords=${encodeURIComponent(q)}`);
         const json = await res.json();
-        const songs = (json.result && json.result.songs) ? json.result.songs : [];
-        renderResults(songs);
+        const rawSongs = (json.result && json.result.songs) ? json.result.songs : [];
+
+        // 正規化資料結構，確保每一首的 id, name, artist, pic 都有絕對標準鍵值
+        const songs = rawSongs.map(s => ({
+          id: s.id,
+          name: s.name,
+          artist: getArtistName(s),
+          pic: s.pic || '',
+          url: s.url || ''
+        }));
+
+        currentPlaylist = songs;
+        currentIndex = -1;
+        playlistTitle.innerText = `搜尋結果：${q}`;
+        playlistCount.innerText = `共 ${songs.length} 首`;
+
+        renderPlaylistUI();
       } catch (e) {
         resultsContainer.innerHTML = `<div class="empty-state">無法連線到伺服器，請稍候再試</div>`;
       }
     }
 
-    function renderResults(songs) {
-      if (!songs || songs.length === 0) {
+    // 點擊歌曲時：若使用者點了「晴天」，自動將該歌手的精華代表作整理成專屬專輯連播！
+    async function onUserClickSong(clickedIndex) {
+      const selected = currentPlaylist[clickedIndex];
+      const mainArtist = selected.artist.split('/')[0].trim();
+
+      // 先立即播放使用者點選的這首
+      playTrackDirectly(selected);
+
+      // 如果清單中全都是同名的歌（例如搜尋「晴天」），自動在背景重整成該歌手的連播清單
+      if (mainArtist && mainArtist !== "未知歌手") {
+        try {
+          const res = await fetch(`${API_BASE}/search?keywords=${encodeURIComponent(mainArtist)}`);
+          const json = await res.json();
+          const rawArtistSongs = (json.result && json.result.songs) ? json.result.songs : [];
+
+          // 整理成不重複代表作清單
+          const seen = new Set();
+          const uniqueList = [selected]; // 第一首永遠是剛才點的
+          seen.add(cleanName(selected.name));
+
+          for (const raw of rawArtistSongs) {
+            const cName = cleanName(raw.name);
+            if (!seen.has(cName)) {
+              seen.add(cName);
+              uniqueList.push({
+                id: raw.id,
+                name: raw.name,
+                artist: getArtistName(raw),
+                pic: raw.pic || '',
+                url: raw.url || ''
+              });
+            }
+          }
+
+          // 重新替換為完整的歌手連播清單
+          currentPlaylist = uniqueList;
+          currentIndex = 0;
+          playlistTitle.innerText = `連播電台：${mainArtist}`;
+          playlistCount.innerText = `共 ${uniqueList.length} 首不同代表作`;
+          renderPlaylistUI();
+          highlightActiveCard();
+          showToast(`已為您排定《${mainArtist}》全套代表作連播！`, false);
+          return;
+        } catch (e) {
+          console.warn("重整關聯清單失敗，維持原清單", e);
+        }
+      }
+
+      currentIndex = clickedIndex;
+      highlightActiveCard();
+    }
+
+    function renderPlaylistUI() {
+      if (currentPlaylist.length === 0) {
         resultsContainer.innerHTML = `<div class="empty-state">找不到相符歌曲</div>`;
         return;
       }
       resultsContainer.innerHTML = "";
-      songs.forEach((s) => {
+      currentPlaylist.forEach((s, idx) => {
         const item = document.createElement("div");
-        item.className = "result-card";
-        const artists = getArtistName(s);
-        const pic = s.pic || "";
+        item.className = `result-card ${idx === currentIndex ? 'active-playing' : ''}`;
 
         item.innerHTML = `
-          <img class="result-thumb" src="${pic ? pic : 'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'46\' height=\'46\'%3E%3Crect width=\'100%25\' height=\'100%25\' fill=\'%23f1f5f9\'/%3E%3Ctext x=\'50%25\' y=\'50%25\' dominant-baseline=\'middle\' text-anchor=\'middle\' font-size=\'20\' fill=\'%2394a3b8\'%3E🎵%3C/text%3E%3C/svg%3E'}" loading="lazy" />
+          <img class="result-thumb" src="${s.pic ? s.pic : 'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'46\' height=\'46\'%3E%3Crect width=\'100%25\' height=\'100%25\' fill=\'%23f1f5f9\'/%3E%3Ctext x=\'50%25\' y=\'50%25\' dominant-baseline=\'middle\' text-anchor=\'middle\' font-size=\'20\' fill=\'%2394a3b8\'%3E🎵%3C/text%3E%3C/svg%3E'}" loading="lazy" />
           <div class="result-info">
             <div class="result-name">${escapeHtml(s.name)}</div>
-            <div class="result-artist">${escapeHtml(artists)}</div>
+            <div class="result-artist">${escapeHtml(s.artist)}</div>
           </div>
         `;
-        item.onclick = () => onSelectSong(s);
+        item.onclick = () => {
+          if (currentIndex === idx && !audio.paused) {
+            togglePlay();
+          } else if (currentIndex === idx && audio.paused) {
+            audio.play();
+          } else {
+            onUserClickSong(idx);
+          }
+        };
         resultsContainer.appendChild(item);
       });
     }
@@ -718,68 +768,19 @@
       return track.artist || track.author || "熱門歌手";
     }
 
-    async function onSelectSong(song) {
-      const artist = getArtistName(song);
-      currentSeedArtist = artist.split('/')[0].trim() || "周杰倫";
-      seedIndex = 0;
-
-      playedSongNames.clear();
-      playedSongNames.add(cleanName(song.name));
-
-      smartQueue = [song];
-      currentQueueIndex = 0;
-
-      playAudio(song.id, song.name, artist, song.pic, song.url, 0);
-      await fetchNextBatchSongs();
-      showToast(`✨ 已為您啟動無限好歌探索！`, false);
-    }
-
-    function playAudio(id, name, artists, picUrl, playUrl, startTime = 0) {
-      currentTrack = { id, name, artists, picUrl, playUrl };
-      trackTitle.innerText = name;
-      trackArtist.innerText = artists;
-      if (picUrl) cover.src = picUrl;
-
-      playBtn.innerText = "⏳";
-
-      const streamUrl = playUrl || `https://api.qijieya.cn/meting/?type=url&id=${id}`;
-      audio.src = streamUrl;
-
-      if (startTime > 0) {
-        audio.currentTime = startTime;
-      }
-
-      audio.play().then(() => {
-        playBtn.innerText = "⏸";
-        container.classList.add("playing");
-
-        if ('mediaSession' in navigator) {
-          navigator.mediaSession.metadata = new MediaMetadata({
-            title: name,
-            artist: artists,
-            artwork: picUrl ? [{ src: picUrl }] : []
-          });
-
-          navigator.mediaSession.setActionHandler('nexttrack', () => playNextTrack());
-          navigator.mediaSession.setActionHandler('previoustrack', () => playPrevTrack());
-          navigator.mediaSession.setActionHandler('play', () => audio.play());
-          navigator.mediaSession.setActionHandler('pause', () => audio.pause());
-        }
-      }).catch(err => {
-        console.warn("Autoplay notice:", err);
-        playBtn.innerText = "▶";
-      });
+    function cleanName(raw) {
+      return (raw || "").replace(/\(.*?\)|\[.*?\]|（.*?）/g, '').trim().toLowerCase();
     }
 
     function handleShare() {
-      if (!currentTrack) {
+      if (!currentPlayingTrack) {
         showToast("⚠️ 請先點選一首歌曲播放！", true);
         return;
       }
       const curSec = Math.floor(audio.currentTime || 0);
-      const shareUrl = `${window.location.origin}${window.location.pathname}?id=${currentTrack.id}&t=${curSec}`;
-      const shareTitle = `來聽這首：${currentTrack.name}`;
-      const shareText = `我正在聽《${currentTrack.name} - ${currentTrack.artists}》，從 ${formatTime(curSec)} 開始聽！`;
+      const shareUrl = `${window.location.origin}${window.location.pathname}?id=${currentPlayingTrack.id}&t=${curSec}`;
+      const shareTitle = `來聽這首：${currentPlayingTrack.name}`;
+      const shareText = `我正在聽《${currentPlayingTrack.name} - ${currentPlayingTrack.artist}》，從 ${formatTime(curSec)} 開始聽！`;
 
       if (navigator.share) {
         navigator.share({ title: shareTitle, text: shareText, url: shareUrl }).catch(() => {});
@@ -816,8 +817,17 @@
       const id = params.get("id");
       const startTime = parseFloat(params.get("t")) || 0;
       if (id) {
-        const streamUrl = `https://api.qijieya.cn/meting/?type=url&id=${id}`;
-        playAudio(id, "分享歌曲", "點擊播放", "", streamUrl, startTime);
+        const dummyTrack = {
+          id: id,
+          name: "分享歌曲",
+          artist: "點擊播放",
+          pic: "",
+          url: `https://api.qijieya.cn/meting/?type=url&id=${id}`
+        };
+        currentPlaylist = [dummyTrack];
+        currentIndex = 0;
+        playTrackDirectly(dummyTrack, startTime);
+        renderPlaylistUI();
       }
     });
   </script>
