@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>WaveSync - 全網熱門串流播放器</title>
+  <title>WaveSync - 全網熱門音樂串流</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://fonts.gstatic.com">
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
@@ -13,7 +13,7 @@
       --primary-glow: rgba(139, 92, 246, 0.45);
       --accent: #ec4899;
       --bg-base: #0a0b10;
-      --card-bg: rgba(26, 27, 38, 0.7);
+      --card-bg: rgba(26, 27, 38, 0.75);
       --card-border: rgba(255, 255, 255, 0.08);
       --text-main: #f8fafc;
       --text-sub: #94a3b8;
@@ -350,7 +350,18 @@
     .toast-error {
       background: rgba(239, 68, 68, 0.95) !important;
     }
+
+    /* 隱藏但保持活躍的官方播放容器 */
+    #yt-hidden-frame {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      opacity: 0.01;
+      pointer-events: none;
+      bottom: 0;
+    }
   </style>
+  <script src="https://www.youtube.com/iframe_api"></script>
 </head>
 <body>
 
@@ -362,7 +373,7 @@
   <div class="app-container">
     <div class="header-bar">
       <div class="brand-title">WaveSync</div>
-      <div class="live-tag">手機背景/鎖屏播放</div>
+      <div class="live-tag">完整版串流播放</div>
     </div>
 
     <div class="player-card" id="playerContainer">
@@ -373,7 +384,7 @@
 
       <div class="track-meta">
         <div id="trackTitle" class="track-title">輸入熱門歌名或歌手</div>
-        <div id="trackArtist" class="track-artist">支援周杰倫、熱門排行榜搜尋</div>
+        <div id="trackArtist" class="track-artist">全網高音質完整版</div>
       </div>
 
       <div class="progress-container">
@@ -386,7 +397,8 @@
         <button class="btn-play-toggle" id="playBtn" onclick="togglePlay()">▶</button>
       </div>
 
-      <audio id="audioPlayer" preload="auto"></audio>
+      <!-- 隱藏的官方播放核心 -->
+      <div id="yt-hidden-frame"></div>
     </div>
 
     <div class="search-wrapper">
@@ -413,7 +425,6 @@
   <script>
     const API_BASE = "https://music-api-pi-blond.vercel.app/api";
 
-    const audio = document.getElementById("audioPlayer");
     const container = document.getElementById("playerContainer");
     const playBtn = document.getElementById("playBtn");
     const trackTitle = document.getElementById("trackTitle");
@@ -426,46 +437,82 @@
     const resultsContainer = document.getElementById("resultsContainer");
     const toast = document.getElementById("toast");
 
+    let ytPlayer = null;
     let currentTrack = null;
+    let progressTimer = null;
 
-    function togglePlay() {
-      if (!audio.src) {
-        showToast("請先選擇一首歌曲！", true);
-        return;
-      }
-      if (audio.paused) {
-        audio.play().then(() => {
-          playBtn.innerText = "⏸";
-          container.classList.add("playing");
-        }).catch(() => showToast("播放失敗，請再試一次", true));
-      } else {
-        audio.pause();
+    // 初始化隱藏的官方播放器
+    window.onYouTubeIframeAPIReady = function() {
+      ytPlayer = new YT.Player('yt-hidden-frame', {
+        height: '200',
+        width: '200',
+        playerVars: {
+          playsinline: 1,
+          controls: 0,
+          disablekb: 1,
+          origin: window.location.origin
+        },
+        events: {
+          'onStateChange': onPlayerStateChange
+        }
+      });
+    };
+
+    function onPlayerStateChange(event) {
+      // 播放中
+      if (event.data === YT.PlayerState.PLAYING) {
+        playBtn.innerText = "⏸";
+        container.classList.add("playing");
+        startProgressTracking();
+      } else if (event.data === YT.PlayerState.PAUSED || event.data === YT.PlayerState.ENDED) {
         playBtn.innerText = "▶";
         container.classList.remove("playing");
+        stopProgressTracking();
+      } else if (event.data === YT.PlayerState.BUFFERING) {
+        playBtn.innerText = "⏳";
       }
     }
 
-    audio.addEventListener("timeupdate", () => {
-      if (!isNaN(audio.duration) && audio.duration > 0) {
-        progressBar.value = (audio.currentTime / audio.duration) * 100;
-        currentTimeText.innerText = formatTime(audio.currentTime);
-        durationText.innerText = formatTime(audio.duration);
+    function togglePlay() {
+      if (!ytPlayer || !currentTrack) {
+        showToast("請先選擇一首歌曲！", true);
+        return;
       }
-    });
+      const state = ytPlayer.getPlayerState();
+      if (state === YT.PlayerState.PLAYING) {
+        ytPlayer.pauseVideo();
+      } else {
+        ytPlayer.playVideo();
+      }
+    }
+
+    function startProgressTracking() {
+      stopProgressTracking();
+      progressTimer = setInterval(() => {
+        if (!ytPlayer || typeof ytPlayer.getCurrentTime !== 'function') return;
+        const cur = ytPlayer.getCurrentTime() || 0;
+        const dur = ytPlayer.getDuration() || 0;
+
+        if (dur > 0) {
+          progressBar.value = (cur / dur) * 100;
+          currentTimeText.innerText = formatTime(cur);
+          durationText.innerText = formatTime(dur);
+        }
+      }, 500);
+    }
+
+    function stopProgressTracking() {
+      if (progressTimer) clearInterval(progressTimer);
+    }
 
     progressBar.addEventListener("input", () => {
-      if (!isNaN(audio.duration) && audio.duration > 0) {
-        audio.currentTime = (progressBar.value / 100) * audio.duration;
+      if (!ytPlayer || typeof ytPlayer.getDuration !== 'function') return;
+      const dur = ytPlayer.getDuration() || 0;
+      if (dur > 0) {
+        const targetSec = (progressBar.value / 100) * dur;
+        ytPlayer.seekTo(targetSec, true);
+        currentTimeText.innerText = formatTime(targetSec);
       }
-    });
-
-    audio.addEventListener("play", () => {
-      playBtn.innerText = "⏸";
-      container.classList.add("playing");
-    });
-    audio.addEventListener("pause", () => {
-      playBtn.innerText = "▶";
-      container.classList.remove("playing");
     });
 
     async function searchMusic() {
@@ -475,7 +522,7 @@
       resultsContainer.innerHTML = `<div class="empty-state">正在尋找「${escapeHtml(q)}」...</div>`;
 
       try {
-        const res = await fetch(`${API_BASE}/search?keywords=${encodeURIComponent(q)}&limit=20`);
+        const res = await fetch(`${API_BASE}/search?keywords=${encodeURIComponent(q)}`);
         const json = await res.json();
         const songs = (json.result && json.result.songs) ? json.result.songs : [];
         renderResults(songs);
@@ -486,14 +533,14 @@
 
     function renderResults(songs) {
       if (!songs || songs.length === 0) {
-        resultsContainer.innerHTML = `<div class="empty-state">找不到相符歌曲，請嘗試其他關鍵字</div>`;
+        resultsContainer.innerHTML = `<div class="empty-state">找不到相符歌曲</div>`;
         return;
       }
       resultsContainer.innerHTML = "";
       songs.forEach(s => {
         const item = document.createElement("div");
         item.className = "result-card";
-        const artists = s.artists ? s.artists.map(a => a.name).join("/") : "未知歌手";
+        const artists = s.artists ? s.artists.map(a => a.name).join("/") : "熱門音樂";
         const pic = s.pic || "";
 
         item.innerHTML = `
@@ -508,57 +555,38 @@
       });
     }
 
-    async function playSong(id, name, artists, picUrl, startTime = 0) {
-      currentTrack = { id, name, artists, picUrl };
+    function playSong(videoId, name, artists, picUrl, startTime = 0) {
+      currentTrack = { id: videoId, name, artists, picUrl };
       trackTitle.innerText = name;
       trackArtist.innerText = artists;
       if (picUrl) cover.src = picUrl;
 
       playBtn.innerText = "⏳";
 
-      try {
-        const res = await fetch(`${API_BASE}/song/url?id=${id}`);
-        const json = await res.json();
-        const streamUrl = json.data && json.data[0] && json.data[0].url;
+      if (ytPlayer && typeof ytPlayer.loadVideoById === 'function') {
+        ytPlayer.loadVideoById({
+          videoId: videoId,
+          startSeconds: startTime
+        });
 
-        if (!streamUrl) throw new Error("無可用音訊");
-
-        audio.src = streamUrl;
-        audio.load();
-
-        audio.oncanplay = async () => {
-          audio.oncanplay = null;
-          if (startTime > 0) audio.currentTime = startTime;
-
-          try {
-            await audio.play();
-            playBtn.innerText = "⏸";
-            container.classList.add("playing");
-
-            if ('mediaSession' in navigator) {
-              navigator.mediaSession.metadata = new MediaMetadata({
-                title: name,
-                artist: artists,
-                artwork: picUrl ? [{ src: picUrl }] : []
-              });
-            }
-          } catch (e) {
-            playBtn.innerText = "▶";
-            container.classList.remove("playing");
-          }
-        };
-      } catch (err) {
-        playBtn.innerText = "▶";
-        container.classList.remove("playing");
-        showToast("⚠️ 音源載入失敗，請嘗試其他曲目", true);
+        if ('mediaSession' in navigator) {
+          navigator.mediaSession.metadata = new MediaMetadata({
+            title: name,
+            artist: artists,
+            artwork: picUrl ? [{ src: picUrl }] : []
+          });
+        }
+      } else {
+        setTimeout(() => playSong(videoId, name, artists, picUrl, startTime), 500);
       }
     }
+
     function handleShare() {
-      if (!currentTrack) {
+      if (!currentTrack || !ytPlayer) {
         showToast("⚠️ 請先點選一首歌曲播放！", true);
         return;
       }
-      const curSec = Math.floor(audio.currentTime);
+      const curSec = Math.floor(ytPlayer.getCurrentTime() || 0);
       const shareUrl = `${window.location.origin}${window.location.pathname}?id=${currentTrack.id}&t=${curSec}`;
       const shareTitle = `來聽這首：${currentTrack.name}`;
       const shareText = `我正在聽《${currentTrack.name} - ${currentTrack.artists}》，從 ${formatTime(curSec)} 開始聽！`;
@@ -592,6 +620,21 @@
         "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
       }[m]));
     }
+
+    // 檢查網址是否有分享參數
+    window.addEventListener("load", () => {
+      const params = new URLSearchParams(window.location.search);
+      const id = params.get("id");
+      const startTime = parseFloat(params.get("t")) || 0;
+      if (id) {
+        const checkTimer = setInterval(() => {
+          if (ytPlayer && typeof ytPlayer.loadVideoById === 'function') {
+            clearInterval(checkTimer);
+            playSong(id, "分享歌曲", "即將播放", "", startTime);
+          }
+        }, 300);
+      }
+    });
   </script>
 </body>
 </html>
