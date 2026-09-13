@@ -190,7 +190,18 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      gap: 20px;
+      gap: 18px;
+    }
+    .btn-ctrl {
+      background: transparent;
+      border: none;
+      color: #cbd5e1;
+      font-size: 1.2rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 8px;
     }
     .btn-play-toggle {
       width: 52px;
@@ -259,6 +270,11 @@
       padding: 10px 12px;
       border-radius: 14px;
       cursor: pointer;
+      transition: background 0.2s;
+    }
+    .result-card.active-track {
+      background: rgba(139, 92, 246, 0.25);
+      border-left: 3px solid var(--accent);
     }
     .result-card:active {
       background: rgba(255, 255, 255, 0.08);
@@ -362,7 +378,7 @@
   <div class="app-container">
     <div class="header-bar">
       <div class="brand-title">WaveSync</div>
-      <div class="live-tag">真音訊・手機背景鎖屏</div>
+      <div class="live-tag">智慧連播電台</div>
     </div>
 
     <div class="player-card" id="playerContainer">
@@ -373,7 +389,7 @@
 
       <div class="track-meta">
         <div id="trackTitle" class="track-title">輸入熱門歌名或歌手</div>
-        <div id="trackArtist" class="track-artist">全網 VIP 完整版支援</div>
+        <div id="trackArtist" class="track-artist">播完自動探索相關好歌</div>
       </div>
 
       <div class="progress-container">
@@ -383,10 +399,11 @@
       </div>
 
       <div class="player-controls">
+        <button class="btn-ctrl" onclick="playPrevTrack()" title="上一首">⏮</button>
         <button class="btn-play-toggle" id="playBtn" onclick="togglePlay()">▶</button>
+        <button class="btn-ctrl" onclick="playNextTrack()" title="下一首">⏭</button>
       </div>
 
-      <!-- 原生純音訊標籤，支援手機背景與鎖屏背景播放 -->
       <audio id="audioPlayer" preload="auto"></audio>
     </div>
 
@@ -427,6 +444,9 @@
     const resultsContainer = document.getElementById("resultsContainer");
     const toast = document.getElementById("toast");
 
+    // smartQueue 專門存放「自動連播」的關聯歌曲庫
+    let smartQueue = [];
+    let currentQueueIndex = -1;
     let currentTrack = null;
 
     function togglePlay() {
@@ -450,6 +470,37 @@
       playBtn.innerText = "▶";
       container.classList.remove("playing");
     });
+
+    // 核心亮點：當前歌曲播放完畢，自動切換下一首不同歌名的關聯好歌
+    audio.addEventListener("ended", () => {
+      playNextTrack();
+    });
+
+    function playNextTrack() {
+      if (smartQueue.length === 0) return;
+      let nextIndex = currentQueueIndex + 1;
+      if (nextIndex >= smartQueue.length) {
+        nextIndex = 0;
+      }
+      playFromQueue(nextIndex);
+    }
+
+    function playPrevTrack() {
+      if (smartQueue.length === 0) return;
+      let prevIndex = currentQueueIndex - 1;
+      if (prevIndex < 0) {
+        prevIndex = smartQueue.length - 1;
+      }
+      playFromQueue(prevIndex);
+    }
+
+    function playFromQueue(index) {
+      if (index < 0 || index >= smartQueue.length) return;
+      currentQueueIndex = index;
+      const track = smartQueue[index];
+      const artist = track.artists ? track.artists.map(a => a.name).join("/") : "熱門歌手";
+      playCore(track.id, track.name, artist, track.pic, track.url, 0);
+    }
 
     audio.addEventListener("timeupdate", () => {
       if (!isNaN(audio.duration) && audio.duration > 0) {
@@ -489,10 +540,10 @@
         return;
       }
       resultsContainer.innerHTML = "";
-      songs.forEach(s => {
+      songs.forEach((s, idx) => {
         const item = document.createElement("div");
         item.className = "result-card";
-        const artists = s.artists ? s.artists.map(a => a.name).join("/") : "周杰倫";
+        const artists = s.artists ? s.artists.map(a => a.name).join("/") : "熱門歌手";
         const pic = s.pic || "";
 
         item.innerHTML = `
@@ -502,12 +553,55 @@
             <div class="result-artist">${escapeHtml(artists)}</div>
           </div>
         `;
-        item.onclick = () => playSong(s.id, s.name, artists, pic, s.url, 0);
+        // 使用者點選特定歌曲
+        item.onclick = () => onUserSelectSong(s, songs);
         resultsContainer.appendChild(item);
       });
     }
 
-    async function playSong(id, name, artists, picUrl, playUrl, startTime = 0) {
+    // 當使用者手動點選一首歌時觸發
+    async function onUserSelectSong(selectedSong, currentSearchList) {
+      const artistName = (selectedSong.artists && selectedSong.artists[0]) ? selectedSong.artists[0].name : "周杰倫";
+      
+      // 1. 先播放當前點擊的這首
+      const artist = selectedSong.artists ? selectedSong.artists.map(a => a.name).join("/") : "熱門歌手";
+      playCore(selectedSong.id, selectedSong.name, artist, selectedSong.pic, selectedSong.url, 0);
+
+      // 2. 初始化佇列：第一首放這首歌
+      smartQueue = [selectedSong];
+      currentQueueIndex = 0;
+
+      // 3. 背景自動載入該歌手的「其他經典熱門關聯歌曲」，並排除同名歌曲
+      loadArtistRadioQueue(artistName, selectedSong.name);
+    }
+
+    // 自動建置關聯歌單（過濾掉同名晴天，抓取該歌手的其他代表作）
+    async function loadArtistRadioQueue(artistName, currentSongName) {
+      try {
+        const res = await fetch(`${API_BASE}/search?keywords=${encodeURIComponent(artistName)}`);
+        const json = await res.json();
+        const artistSongs = (json.result && json.result.songs) ? json.result.songs : [];
+
+        // 整理關聯庫：去掉當前歌名、去掉重複歌名
+        const seenNames = new Set([currentSongName.toLowerCase().trim()]);
+        const filteredSongs = [];
+
+        for (const s of artistSongs) {
+          const cleanName = s.name.toLowerCase().trim();
+          if (!seenNames.has(cleanName)) {
+            seenNames.add(cleanName);
+            filteredSongs.push(s);
+          }
+        }
+
+        // 接在當前歌曲後面，組成連播佇列
+        smartQueue = [smartQueue[0], ...filteredSongs];
+      } catch (e) {
+        console.warn("無法取得智慧關聯歌單", e);
+      }
+    }
+
+    async function playCore(id, name, artists, picUrl, playUrl, startTime = 0) {
       currentTrack = { id, name, artists, picUrl, playUrl };
       trackTitle.innerText = name;
       trackArtist.innerText = artists;
@@ -532,11 +626,15 @@
             artist: artists,
             artwork: picUrl ? [{ src: picUrl }] : []
           });
+
+          navigator.mediaSession.setActionHandler('nexttrack', () => playNextTrack());
+          navigator.mediaSession.setActionHandler('previoustrack', () => playPrevTrack());
+          navigator.mediaSession.setActionHandler('play', () => audio.play());
+          navigator.mediaSession.setActionHandler('pause', () => audio.pause());
         }
       }).catch(err => {
-        console.warn("Autoplay block, waiting user click:", err);
+        console.warn("Autoplay block notice:", err);
         playBtn.innerText = "▶";
-        showToast("點擊 ▶ 即可開始收聽！", false);
       });
     }
 
@@ -580,14 +678,13 @@
       }[m]));
     }
 
-    // 檢查分享參數
     window.addEventListener("load", () => {
       const params = new URLSearchParams(window.location.search);
       const id = params.get("id");
       const startTime = parseFloat(params.get("t")) || 0;
       if (id) {
         const streamUrl = `https://api.qijieya.cn/meting/?type=url&id=${id}`;
-        playSong(id, "分享歌曲", "點擊播放", "", streamUrl, startTime);
+        playCore(id, "分享歌曲", "點擊播放", "", streamUrl, startTime);
       }
     });
   </script>
