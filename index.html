@@ -350,19 +350,7 @@
     .toast-error {
       background: rgba(239, 68, 68, 0.95) !important;
     }
-
-    /* 播放器掛載容器 (必須保有尺寸才能正常播音訊) */
-    #yt-hidden-frame {
-      position: fixed;
-      bottom: -300px;
-      left: 0;
-      width: 200px;
-      height: 200px;
-      opacity: 0.01;
-      pointer-events: none;
-    }
   </style>
-  <script src="https://www.youtube.com/iframe_api"></script>
 </head>
 <body>
 
@@ -374,7 +362,7 @@
   <div class="app-container">
     <div class="header-bar">
       <div class="brand-title">WaveSync</div>
-      <div class="live-tag">完整版串流播放</div>
+      <div class="live-tag">真音訊・手機背景鎖屏</div>
     </div>
 
     <div class="player-card" id="playerContainer">
@@ -385,7 +373,7 @@
 
       <div class="track-meta">
         <div id="trackTitle" class="track-title">輸入熱門歌名或歌手</div>
-        <div id="trackArtist" class="track-artist">全網高音質完整版</div>
+        <div id="trackArtist" class="track-artist">全網 VIP 完整版支援</div>
       </div>
 
       <div class="progress-container">
@@ -398,8 +386,8 @@
         <button class="btn-play-toggle" id="playBtn" onclick="togglePlay()">▶</button>
       </div>
 
-      <!-- 官方背景音訊掛載點 -->
-      <div id="yt-hidden-frame"></div>
+      <!-- 原生純音訊標籤，支援手機背景與鎖屏背景播放 -->
+      <audio id="audioPlayer" preload="auto"></audio>
     </div>
 
     <div class="search-wrapper">
@@ -426,6 +414,7 @@
   <script>
     const API_BASE = "https://music-api-pi-blond.vercel.app/api";
 
+    const audio = document.getElementById("audioPlayer");
     const container = document.getElementById("playerContainer");
     const playBtn = document.getElementById("playBtn");
     const trackTitle = document.getElementById("trackTitle");
@@ -438,101 +427,42 @@
     const resultsContainer = document.getElementById("resultsContainer");
     const toast = document.getElementById("toast");
 
-    let ytPlayer = null;
     let currentTrack = null;
-    let progressTimer = null;
-    let searchResultsList = [];
-
-    // 初始化 IFrame API
-    window.onYouTubeIframeAPIReady = function() {
-      ytPlayer = new YT.Player('yt-hidden-frame', {
-        height: '200',
-        width: '200',
-        playerVars: {
-          autoplay: 1,
-          playsinline: 1,
-          controls: 0,
-          rel: 0
-        },
-        events: {
-          'onReady': onPlayerReady,
-          'onStateChange': onPlayerStateChange,
-          'onError': onPlayerError
-        }
-      });
-    };
-
-    function onPlayerReady(event) {
-      console.log("YT Engine Ready");
-    }
-
-    function onPlayerStateChange(event) {
-      if (event.data === YT.PlayerState.PLAYING) {
-        playBtn.innerText = "⏸";
-        container.classList.add("playing");
-        startProgressTracking();
-      } else if (event.data === YT.PlayerState.PAUSED || event.data === YT.PlayerState.ENDED) {
-        playBtn.innerText = "▶";
-        container.classList.remove("playing");
-        stopProgressTracking();
-      }
-    }
-
-    // 處理版權阻擋 (Code 150 / 101：官方禁外嵌)
-    function onPlayerError(event) {
-      console.warn("Playback blocked on current video, auto fallback...", event.data);
-      // 自動嘗試清單中的下一個版本
-      if (searchResultsList.length > 1) {
-        const next = searchResultsList.find(s => s.id !== currentTrack.id);
-        if (next) {
-          showToast("官方原版限制外嵌，已自動切換可用音源！", false);
-          playSong(next.id, next.name, next.artists[0]?.name || "熱門音樂", next.pic, 0);
-          return;
-        }
-      }
-      playBtn.innerText = "▶";
-      container.classList.remove("playing");
-      showToast("⚠️ 此版本受版權保護，請點選其他翻唱/現場版本", true);
-    }
 
     function togglePlay() {
-      if (!ytPlayer || !currentTrack) {
+      if (!audio.src) {
         showToast("請先選擇一首歌曲！", true);
         return;
       }
-      const state = ytPlayer.getPlayerState();
-      if (state === YT.PlayerState.PLAYING) {
-        ytPlayer.pauseVideo();
+      if (audio.paused) {
+        audio.play();
       } else {
-        ytPlayer.playVideo();
+        audio.pause();
       }
     }
 
-    function startProgressTracking() {
-      stopProgressTracking();
-      progressTimer = setInterval(() => {
-        if (!ytPlayer || typeof ytPlayer.getCurrentTime !== 'function') return;
-        const cur = ytPlayer.getCurrentTime() || 0;
-        const dur = ytPlayer.getDuration() || 0;
+    audio.addEventListener("play", () => {
+      playBtn.innerText = "⏸";
+      container.classList.add("playing");
+    });
 
-        if (dur > 0) {
-          progressBar.value = (cur / dur) * 100;
-          currentTimeText.innerText = formatTime(cur);
-          durationText.innerText = formatTime(dur);
-        }
-      }, 500);
-    }
+    audio.addEventListener("pause", () => {
+      playBtn.innerText = "▶";
+      container.classList.remove("playing");
+    });
 
-    function stopProgressTracking() {
-      if (progressTimer) clearInterval(progressTimer);
-    }
+    audio.addEventListener("timeupdate", () => {
+      if (!isNaN(audio.duration) && audio.duration > 0) {
+        progressBar.value = (audio.currentTime / audio.duration) * 100;
+        currentTimeText.innerText = formatTime(audio.currentTime);
+        durationText.innerText = formatTime(audio.duration);
+      }
+    });
 
     progressBar.addEventListener("input", () => {
-      if (!ytPlayer || typeof ytPlayer.getDuration !== 'function') return;
-      const dur = ytPlayer.getDuration() || 0;
-      if (dur > 0) {
-        const targetSec = (progressBar.value / 100) * dur;
-        ytPlayer.seekTo(targetSec, true);
+      if (!isNaN(audio.duration) && audio.duration > 0) {
+        const targetSec = (progressBar.value / 100) * audio.duration;
+        audio.currentTime = targetSec;
         currentTimeText.innerText = formatTime(targetSec);
       }
     });
@@ -547,7 +477,6 @@
         const res = await fetch(`${API_BASE}/search?keywords=${encodeURIComponent(q)}`);
         const json = await res.json();
         const songs = (json.result && json.result.songs) ? json.result.songs : [];
-        searchResultsList = songs;
         renderResults(songs);
       } catch (e) {
         resultsContainer.innerHTML = `<div class="empty-state">無法連線到伺服器，請稍候再試</div>`;
@@ -563,37 +492,39 @@
       songs.forEach(s => {
         const item = document.createElement("div");
         item.className = "result-card";
-        const artists = s.artists ? s.artists.map(a => a.name).join("/") : "熱門音樂";
+        const artists = s.artists ? s.artists.map(a => a.name).join("/") : "周杰倫";
         const pic = s.pic || "";
 
         item.innerHTML = `
-          <img class="result-thumb" src="${pic}" loading="lazy" />
+          <img class="result-thumb" src="${pic ? pic : 'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'44\' height=\'44\'%3E%3Crect width=\'100%25\' height=\'100%25\' fill=\'%23252836\'/%3E%3Ctext x=\'50%25\' y=\'50%25\' dominant-baseline=\'middle\' text-anchor=\'middle\' font-size=\'18\' fill=\'%23888\'%3E🎵%3C/text%3E%3C/svg%3E'}" loading="lazy" />
           <div class="result-info">
             <div class="result-name">${escapeHtml(s.name)}</div>
             <div class="result-artist">${escapeHtml(artists)}</div>
           </div>
         `;
-        // 使用者點擊時直接觸發 playSong
-        item.onclick = () => playSong(s.id, s.name, artists, pic, 0);
+        item.onclick = () => playSong(s.id, s.name, artists, pic, s.url, 0);
         resultsContainer.appendChild(item);
       });
     }
 
-    function playSong(videoId, name, artists, picUrl, startTime = 0) {
-      currentTrack = { id: videoId, name, artists, picUrl };
+    async function playSong(id, name, artists, picUrl, playUrl, startTime = 0) {
+      currentTrack = { id, name, artists, picUrl, playUrl };
       trackTitle.innerText = name;
       trackArtist.innerText = artists;
       if (picUrl) cover.src = picUrl;
 
-      // 點擊後直接指示播放，不再停留沙漏
-      playBtn.innerText = "⏸";
-      container.classList.add("playing");
+      playBtn.innerText = "⏳";
 
-      if (ytPlayer && typeof ytPlayer.loadVideoById === 'function') {
-        ytPlayer.loadVideoById({
-          videoId: videoId,
-          startSeconds: startTime
-        });
+      const streamUrl = playUrl || `https://api.qijieya.cn/meting/?type=url&id=${id}`;
+      audio.src = streamUrl;
+
+      if (startTime > 0) {
+        audio.currentTime = startTime;
+      }
+
+      audio.play().then(() => {
+        playBtn.innerText = "⏸";
+        container.classList.add("playing");
 
         if ('mediaSession' in navigator) {
           navigator.mediaSession.metadata = new MediaMetadata({
@@ -602,15 +533,19 @@
             artwork: picUrl ? [{ src: picUrl }] : []
           });
         }
-      }
+      }).catch(err => {
+        console.warn("Autoplay block, waiting user click:", err);
+        playBtn.innerText = "▶";
+        showToast("點擊 ▶ 即可開始收聽！", false);
+      });
     }
 
     function handleShare() {
-      if (!currentTrack || !ytPlayer) {
+      if (!currentTrack) {
         showToast("⚠️ 請先點選一首歌曲播放！", true);
         return;
       }
-      const curSec = Math.floor(ytPlayer.getCurrentTime() || 0);
+      const curSec = Math.floor(audio.currentTime || 0);
       const shareUrl = `${window.location.origin}${window.location.pathname}?id=${currentTrack.id}&t=${curSec}`;
       const shareTitle = `來聽這首：${currentTrack.name}`;
       const shareText = `我正在聽《${currentTrack.name} - ${currentTrack.artists}》，從 ${formatTime(curSec)} 開始聽！`;
@@ -644,6 +579,17 @@
         "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
       }[m]));
     }
+
+    // 檢查分享參數
+    window.addEventListener("load", () => {
+      const params = new URLSearchParams(window.location.search);
+      const id = params.get("id");
+      const startTime = parseFloat(params.get("t")) || 0;
+      if (id) {
+        const streamUrl = `https://api.qijieya.cn/meting/?type=url&id=${id}`;
+        playSong(id, "分享歌曲", "點擊播放", "", streamUrl, startTime);
+      }
+    });
   </script>
 </body>
 </html>
