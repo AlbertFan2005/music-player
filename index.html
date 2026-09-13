@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>WaveSync - 晨曦純白串流音樂</title>
+  <title>DinoMusic 網頁版背景撥放</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
@@ -88,6 +88,10 @@
       display: flex;
       align-items: center;
       gap: 8px;
+    }
+    .brand-title span {
+      font-size: 1.25rem;
+      -webkit-text-fill-color: initial;
     }
     .live-tag {
       font-size: 0.72rem;
@@ -421,6 +425,9 @@
       transition: transform 0.35s cubic-bezier(0.18, 0.89, 0.32, 1.28);
       z-index: 200;
       pointer-events: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
     .toast-pill.show {
       transform: translateX(-50%) translateY(0);
@@ -441,7 +448,7 @@
   <div class="app-container">
     <div class="header-bar">
       <div class="brand-title">
-        <span>☀️</span> WaveSync
+        <span>🦕</span> DinoMusic
       </div>
       <div class="live-tag">精準連播・背景播放</div>
     </div>
@@ -517,8 +524,6 @@
     const playlistCount = document.getElementById("playlistCount");
     const toast = document.getElementById("toast");
 
-    // 唯一的真理來源（Single Source of Truth）：
-    // 畫面顯示的清單就是實際播放的隊列，完全同步！
     let currentPlaylist = [];
     let currentIndex = -1;
     let currentPlayingTrack = null;
@@ -545,7 +550,6 @@
       container.classList.remove("playing");
     });
 
-    // 核心邏輯：播完順暢播下一首，若播完則循環回第一首
     audio.addEventListener("ended", () => {
       playNextTrack();
     });
@@ -568,7 +572,6 @@
       playTrackByIndex(prevIdx);
     }
 
-    // 透過索引播放，保證資料與音訊一對一完全對齊
     function playTrackByIndex(idx) {
       if (idx < 0 || idx >= currentPlaylist.length) return;
       currentIndex = idx;
@@ -580,7 +583,6 @@
     function playTrackDirectly(track, startTime = 0) {
       currentPlayingTrack = track;
 
-      // 1. 同步更新畫面資訊
       trackTitle.innerText = track.name;
       trackArtist.innerText = track.artist;
       if (track.pic) {
@@ -589,7 +591,6 @@
 
       playBtn.innerText = "⏳";
 
-      // 2. 確定專屬音訊網址（完全根據此曲目自身 ID）
       const streamUrl = track.url || `https://api.qijieya.cn/meting/?type=url&id=${track.id}`;
       audio.src = streamUrl;
 
@@ -601,7 +602,6 @@
         playBtn.innerText = "⏸";
         container.classList.add("playing");
 
-        // 手機通知列與鎖定螢幕同步更新
         if ('mediaSession' in navigator) {
           navigator.mediaSession.metadata = new MediaMetadata({
             title: track.name,
@@ -624,7 +624,6 @@
       document.querySelectorAll(".result-card").forEach((card, i) => {
         if (i === currentIndex) {
           card.classList.add("active-playing");
-          // 自動滾動讓正在播放的曲目置中
           card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         } else {
           card.classList.remove("active-playing");
@@ -659,7 +658,6 @@
         const json = await res.json();
         const rawSongs = (json.result && json.result.songs) ? json.result.songs : [];
 
-        // 正規化資料結構，確保每一首的 id, name, artist, pic 都有絕對標準鍵值
         const songs = rawSongs.map(s => ({
           id: s.id,
           name: s.name,
@@ -679,24 +677,20 @@
       }
     }
 
-    // 點擊歌曲時：若使用者點了「晴天」，自動將該歌手的精華代表作整理成專屬專輯連播！
     async function onUserClickSong(clickedIndex) {
       const selected = currentPlaylist[clickedIndex];
       const mainArtist = selected.artist.split('/')[0].trim();
 
-      // 先立即播放使用者點選的這首
       playTrackDirectly(selected);
 
-      // 如果清單中全都是同名的歌（例如搜尋「晴天」），自動在背景重整成該歌手的連播清單
       if (mainArtist && mainArtist !== "未知歌手") {
         try {
           const res = await fetch(`${API_BASE}/search?keywords=${encodeURIComponent(mainArtist)}`);
           const json = await res.json();
           const rawArtistSongs = (json.result && json.result.songs) ? json.result.songs : [];
 
-          // 整理成不重複代表作清單
           const seen = new Set();
-          const uniqueList = [selected]; // 第一首永遠是剛才點的
+          const uniqueList = [selected];
           seen.add(cleanName(selected.name));
 
           for (const raw of rawArtistSongs) {
@@ -713,11 +707,10 @@
             }
           }
 
-          // 重新替換為完整的歌手連播清單
           currentPlaylist = uniqueList;
           currentIndex = 0;
           playlistTitle.innerText = `連播電台：${mainArtist}`;
-          playlistCount.innerText = `共 ${uniqueList.length} 首不同代表作`;
+          playlistCount.innerText = `共 ${uniqueList.length} 首代表作`;
           renderPlaylistUI();
           highlightActiveCard();
           showToast(`已為您排定《${mainArtist}》全套代表作連播！`, false);
