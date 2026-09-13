@@ -493,45 +493,37 @@
       songs.forEach(s => {
         const item = document.createElement("div");
         item.className = "result-card";
-        const artists = s.artists ? s.artists.map(a => a.name).join("/") : (s.ar ? s.ar.map(a => a.name).join("/") : "未知歌手");
-        const pic = (s.album && s.album.picUrl) ? s.album.picUrl : (s.al ? s.al.picUrl : "");
-        const streamUrl = s.streamUrl || "";
+        const artists = s.artists ? s.artists.map(a => a.name).join("/") : "未知歌手";
 
         item.innerHTML = `
-          <img class="result-thumb" src="${pic}" loading="lazy" />
+          <div class="result-thumb" style="display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.05);font-size:1.2rem;">🎵</div>
           <div class="result-info">
             <div class="result-name">${escapeHtml(s.name)}</div>
             <div class="result-artist">${escapeHtml(artists)}</div>
           </div>
         `;
-        item.onclick = () => playSong(s.id, s.name, artists, pic, 0, streamUrl);
+        item.onclick = () => playSong(s.id, s.name, artists, s.albumId, 0);
         resultsContainer.appendChild(item);
       });
     }
 
-    async function playSong(id, name, artists, picUrl, startTime = 0, directUrl = "") {
-      currentTrack = { id, name, artists, picUrl, directUrl };
+    async function playSong(hash, name, artists, albumId = 0, startTime = 0) {
+      currentTrack = { id: hash, name, artists, albumId };
       trackTitle.innerText = name;
       trackArtist.innerText = artists;
-      if (picUrl) cover.src = picUrl;
 
       playBtn.innerText = "⏳";
 
-      if (!directUrl) {
-        showToast("⚠️ 找不到可用音訊", true);
-        playBtn.innerText = "▶";
-        return;
-      }
+      try {
+        const res = await fetch(`${API_BASE}/song/url?id=${hash}&albumId=${albumId}`);
+        const json = await res.json();
+        const songData = json.data && json.data[0];
 
-      // 透過後端代理串流播放
-      const streamProxyUrl = `${API_BASE}/stream?url=${encodeURIComponent(directUrl)}`;
-      audio.src = streamProxyUrl;
+        if (songData && songData.url) {
+          audio.src = songData.url;
+          if (songData.pic) cover.src = songData.pic;
+          if (startTime > 0) audio.currentTime = startTime;
 
-      audio.oncanplay = async () => {
-        audio.oncanplay = null;
-        if (startTime > 0) audio.currentTime = startTime;
-
-        try {
           await audio.play();
           playBtn.innerText = "⏸";
           container.classList.add("playing");
@@ -540,30 +532,18 @@
             navigator.mediaSession.metadata = new MediaMetadata({
               title: name,
               artist: artists,
-              artwork: picUrl ? [{ src: picUrl }] : []
+              artwork: songData.pic ? [{ src: songData.pic }] : []
             });
           }
-        } catch (err) {
-          playBtn.innerText = "▶";
-          container.classList.remove("playing");
-          showToast("⚠️ 點擊播放鍵即可開始收聽", false);
-        }
-      };
-
-      audio.onerror = () => {
-        if (audio.src !== directUrl) {
-          audio.src = directUrl;
-          audio.load();
         } else {
-          playBtn.innerText = "▶";
-          container.classList.remove("playing");
-          showToast("⚠️ 音訊載入失敗，請換一首試試", true);
+          throw new Error("無可用音訊");
         }
-      };
-
-      audio.load();
+      } catch (err) {
+        playBtn.innerText = "▶";
+        container.classList.remove("playing");
+        showToast("⚠️ 此音源載入失敗，請嘗試其他版本", true);
+      }
     }
-
     function handleShare() {
       if (!currentTrack) {
         showToast("⚠️ 請先點選一首歌曲播放！", true);
