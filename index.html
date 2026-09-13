@@ -169,7 +169,7 @@
       flex-direction: column;
       gap: 4px;
       z-index: 500;
-      min-width: 170px;
+      min-width: 190px;
     }
     .dropdown-menu.show {
       display: flex;
@@ -182,12 +182,28 @@
       color: var(--text-main);
       display: flex;
       align-items: center;
+      justify-content: space-between;
       gap: 10px;
       cursor: pointer;
       transition: background 0.15s;
     }
     .dropdown-item:active {
       background: var(--pill-bg);
+    }
+    .dropdown-item-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #cbd5e1;
+    }
+    .status-dot.active {
+      background: #10b981;
+      box-shadow: 0 0 6px #10b981;
     }
 
     /* 內嵌瀏覽器提示條 */
@@ -220,7 +236,7 @@
       position: relative;
     }
 
-    /* --- 吉祥物恐龍互動樣式 --- */
+    /* 吉祥物恐龍互動樣式 */
     .mascot-area {
       position: absolute;
       top: 14px;
@@ -241,7 +257,6 @@
       transform: scale(1.18) rotate(-6deg);
     }
 
-    /* 律動與打呼動畫 */
     .playing .dino-body {
       animation: dinoBop 0.6s ease-in-out infinite alternate;
       transform-origin: bottom center;
@@ -812,14 +827,27 @@
         <button class="btn-menu-dots" onclick="toggleMenu()" title="選單">⋮</button>
       </div>
 
+      <!-- 右上角下拉選單 -->
       <div class="dropdown-menu" id="dropdownMenu">
         <div class="dropdown-item" onclick="toggleDarkMode()">
-          <span id="darkModeIcon">🌙</span>
-          <span id="darkModeText">深色模式</span>
+          <div class="dropdown-item-left">
+            <span id="darkModeIcon">🌙</span>
+            <span id="darkModeText">深色模式</span>
+          </div>
+        </div>
+        <!-- 8D 環繞音效選項 -->
+        <div class="dropdown-item" onclick="toggle8DAudio()">
+          <div class="dropdown-item-left">
+            <span>🌀</span>
+            <span>8D 環繞音效</span>
+          </div>
+          <span class="status-dot" id="dot8D"></span>
         </div>
         <div class="dropdown-item" onclick="openHistoryModal()">
-          <span>🕒</span>
-          <span>最近播放</span>
+          <div class="dropdown-item-left">
+            <span>🕒</span>
+            <span>最近播放</span>
+          </div>
         </div>
       </div>
     </div>
@@ -834,34 +862,23 @@
       <!-- 恐龍吉祥物互動區 -->
       <div class="mascot-area" onclick="onTapDino()" title="點我摸摸恐龍！">
         <svg class="mascot-dino-svg" viewBox="0 0 64 64" fill="none">
-          <!-- 浮動音符 (播放時起伏) -->
           <g class="dino-note">
             <text x="44" y="16" font-size="12" fill="#ec4899">🎵</text>
           </g>
-          <!-- 打呼氣泡 (暫停時浮現) -->
           <g class="dino-sleep">
             <text x="40" y="15" font-size="11" font-weight="bold" fill="#64748b">z Z</text>
           </g>
-          <!-- 恐龍身體 -->
           <g class="dino-body">
-            <!-- 尾巴 -->
             <path d="M12 44C8 44 4 48 6 52C8 54 14 52 18 48Z" fill="#10b981"/>
-            <!-- 身體與頭 -->
             <path d="M16 48C14 42 16 30 24 24C28 20 34 20 40 22C46 24 48 30 48 36C48 42 44 50 36 52C28 54 20 52 16 48Z" fill="#10b981"/>
-            <!-- 肚皮 -->
             <path d="M26 34C28 30 34 30 38 34C40 38 38 46 34 48C30 50 26 44 26 34Z" fill="#a7f3d0"/>
-            <!-- 背鰭 -->
             <polygon points="20,24 23,19 26,24" fill="#059669"/>
             <polygon points="15,31 18,26 21,31" fill="#059669"/>
-            <!-- 眼睛 -->
             <circle id="dinoEye" cx="38" cy="28" r="2.5" fill="#064e3b"/>
-            <!-- 腮紅 -->
             <circle cx="34" cy="34" r="2" fill="#f472b6" opacity="0.8"/>
-            <!-- 腳腳 -->
             <rect x="22" y="50" width="4" height="5" rx="2" fill="#059669"/>
             <rect x="32" y="50" width="4" height="5" rx="2" fill="#059669"/>
           </g>
-          <!-- 耳機 (播放時呼吸震動) -->
           <g class="dino-headphone">
             <path d="M26 26C26 18 44 18 44 26" stroke="#6366f1" stroke-width="3" stroke-linecap="round"/>
             <rect x="23" y="24" width="4" height="8" rx="2" fill="#4f46e5"/>
@@ -985,6 +1002,7 @@
     const historyListContainer = document.getElementById("historyListContainer");
     const darkModeIcon = document.getElementById("darkModeIcon");
     const darkModeText = document.getElementById("darkModeText");
+    const dot8D = document.getElementById("dot8D");
     const inappBanner = document.getElementById("inappBanner");
     const dinoBubble = document.getElementById("dinoBubble");
     const canvas = document.getElementById("spectrumCanvas");
@@ -996,7 +1014,78 @@
     let currentTab = "explore";
     let exploreBackupList = [];
 
-    // 恐龍彩蛋對話列表
+    // --- Web Audio 8D 環繞立體聲引擎 ---
+    let audioCtx = null;
+    let pannerNode = null;
+    let sourceNode = null;
+    let is8DActive = false;
+    let panAngle = 0;
+    let panAnimId = null;
+
+    function init8DAudioEngine() {
+      if (audioCtx) return true;
+      try {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        audioCtx = new AudioContext();
+        if (audioCtx.createStereoPanner) {
+          pannerNode = audioCtx.createStereoPanner();
+        } else {
+          console.warn("當前瀏覽器核心不支援 StereoPannerNode");
+          return false;
+        }
+
+        sourceNode = audioCtx.createMediaElementSource(audio);
+        sourceNode.connect(pannerNode);
+        pannerNode.connect(audioCtx.destination);
+        return true;
+      } catch (err) {
+        console.warn("8D Audio 初始化受限:", err);
+        return false;
+      }
+    }
+
+    function animate8DPan() {
+      if (!is8DActive) return;
+      panAnimId = requestAnimationFrame(animate8DPan);
+
+      if (audioCtx && pannerNode && !audio.paused) {
+        // 約 8 秒繞著腦袋旋轉一整圈 (正弦波聲相平移)
+        panAngle += 0.012;
+        const panValue = Math.sin(panAngle);
+        pannerNode.pan.setValueAtTime(panValue, audioCtx.currentTime);
+      }
+    }
+
+    function toggle8DAudio() {
+      dropdownMenu.classList.remove("show");
+
+      if (!is8DActive) {
+        const ok = init8DAudioEngine();
+        if (!ok) {
+          showToast("⚠️ 您的裝置目前不支援 8D 聲道平移");
+          return;
+        }
+        if (audioCtx && audioCtx.state === 'suspended') {
+          audioCtx.resume();
+        }
+        is8DActive = true;
+        dot8D.classList.add("active");
+        localStorage.setItem("dinomusic_8d", "true");
+        animate8DPan();
+        showToast("🌀 已開啟 8D 環繞音效！建議配戴耳機聆聽 🎧");
+      } else {
+        is8DActive = false;
+        dot8D.classList.remove("active");
+        localStorage.setItem("dinomusic_8d", "false");
+        if (panAnimId) cancelAnimationFrame(panAnimId);
+        if (pannerNode && audioCtx) {
+          pannerNode.pan.setValueAtTime(0, audioCtx.currentTime); // 回歸中央正中立體聲
+        }
+        showToast("🎧 已關閉 8D 環繞，回歸一般立體聲");
+      }
+    }
+
+    // 恐龍彩蛋對話
     const dinoQuotes = [
       "吼～這首真抓耳！🎵",
       "恐龍也愛聽音樂 🦕",
@@ -1013,7 +1102,6 @@
       dinoBubble.classList.add("show");
       setTimeout(() => dinoBubble.classList.remove("show"), 2200);
 
-      // 連續點 3 次小恐龍，自動隨機切下一首（驚喜彩蛋）
       if (tapCount >= 3) {
         tapCount = 0;
         if (currentPlaylist.length > 1) {
@@ -1241,6 +1329,9 @@
         return;
       }
       if (audio.paused) {
+        if (audioCtx && audioCtx.state === 'suspended') {
+          audioCtx.resume();
+        }
         audio.play().catch(() => showToast("請點擊即可開始播放！"));
       } else {
         audio.pause();
@@ -1250,6 +1341,9 @@
     audio.addEventListener("play", () => {
       playToggleBtn.innerText = "⏸";
       playerCard.classList.add("playing");
+      if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
     });
 
     audio.addEventListener("pause", () => {
@@ -1295,6 +1389,9 @@
 
       if (shouldAutoPlay) {
         playToggleBtn.innerText = "⏳";
+        if (audioCtx && audioCtx.state === 'suspended') {
+          audioCtx.resume();
+        }
         audio.play().then(() => {
           playToggleBtn.innerText = "⏸";
           playerCard.classList.add("playing");
@@ -1543,6 +1640,14 @@
         updateDarkModeUI(true);
       }
 
+      const saved8D = localStorage.getItem("dinomusic_8d");
+      if (saved8D === "true") {
+        init8DAudioEngine();
+        is8DActive = true;
+        dot8D.classList.add("active");
+        animate8DPan();
+      }
+
       updateFavUI();
 
       const p = new URLSearchParams(window.location.search);
@@ -1570,6 +1675,7 @@
 
         const autoStartOnce = () => {
           if (audio.paused) {
+            if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
             audio.play().then(() => {
               playToggleBtn.innerText = "⏸";
               playerCard.classList.add("playing");
