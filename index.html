@@ -169,7 +169,7 @@
       flex-direction: column;
       gap: 4px;
       z-index: 500;
-      min-width: 190px;
+      min-width: 170px;
     }
     .dropdown-menu.show {
       display: flex;
@@ -182,28 +182,12 @@
       color: var(--text-main);
       display: flex;
       align-items: center;
-      justify-content: space-between;
       gap: 10px;
       cursor: pointer;
       transition: background 0.15s;
     }
     .dropdown-item:active {
       background: var(--pill-bg);
-    }
-    .dropdown-item-left {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .status-dot {
-      width: 7px;
-      height: 7px;
-      border-radius: 50%;
-      background: #cbd5e1;
-    }
-    .status-dot.active {
-      background: #10b981;
-      box-shadow: 0 0 6px #10b981;
     }
 
     .inapp-banner {
@@ -826,23 +810,12 @@
 
       <div class="dropdown-menu" id="dropdownMenu">
         <div class="dropdown-item" onclick="toggleDarkMode()">
-          <div class="dropdown-item-left">
-            <span id="darkModeIcon">🌙</span>
-            <span id="darkModeText">深色模式</span>
-          </div>
-        </div>
-        <div class="dropdown-item" onclick="toggle8DAudio()">
-          <div class="dropdown-item-left">
-            <span>🌀</span>
-            <span>8D 空間環繞</span>
-          </div>
-          <span class="status-dot" id="dot8D"></span>
+          <span id="darkModeIcon">🌙</span>
+          <span id="darkModeText">深色模式</span>
         </div>
         <div class="dropdown-item" onclick="openHistoryModal()">
-          <div class="dropdown-item-left">
-            <span>🕒</span>
-            <span>最近播放</span>
-          </div>
+          <span>🕒</span>
+          <span>最近播放</span>
         </div>
       </div>
     </div>
@@ -921,10 +894,7 @@
         <span>分享這首歌給朋友</span>
       </button>
 
-      <!-- 主播放音軌 A -->
       <audio id="audioPlayer" preload="auto"></audio>
-      <!-- 空間相位環繞音軌 B (隱藏原生雙軌，零 CORS 靜音風險) -->
-      <audio id="audioPlayerSpatial" preload="auto"></audio>
     </div>
 
     <div class="search-box">
@@ -970,7 +940,6 @@
     const API_BASE = "https://music-api-pi-blond.vercel.app/api";
 
     const audio = document.getElementById("audioPlayer");
-    const audioSpatial = document.getElementById("audioPlayerSpatial");
     const playerCard = document.getElementById("playerCard");
     const playToggleBtn = document.getElementById("playToggleBtn");
     const trackTitle = document.getElementById("trackTitle");
@@ -994,7 +963,6 @@
     const historyListContainer = document.getElementById("historyListContainer");
     const darkModeIcon = document.getElementById("darkModeIcon");
     const darkModeText = document.getElementById("darkModeText");
-    const dot8D = document.getElementById("dot8D");
     const inappBanner = document.getElementById("inappBanner");
     const dinoBubble = document.getElementById("dinoBubble");
     const canvas = document.getElementById("spectrumCanvas");
@@ -1005,67 +973,6 @@
     let currentTrack = null;
     let currentTab = "explore";
     let exploreBackupList = [];
-
-    // --- 雙軌哈斯相位 8D 空間環繞引擎 (免 Web Audio，絕對不靜音) ---
-    let is8DActive = false;
-    let spatialLoopTimer = null;
-    let spatialPhase = 0;
-
-    function apply8DState() {
-      if (!is8DActive) {
-        audio.volume = 1.0;
-        audioSpatial.pause();
-        audioSpatial.volume = 0;
-        if (spatialLoopTimer) clearInterval(spatialLoopTimer);
-        return;
-      }
-
-      // 開啟 8D：設定空間音軌同步並啟動相位微延遲
-      if (!audio.paused && audio.src) {
-        if (audioSpatial.src !== audio.src) {
-          audioSpatial.src = audio.src;
-        }
-        // 刻意引入約 25ms 相位延遲 (Haas Effect)
-        audioSpatial.currentTime = Math.max(0, audio.currentTime - 0.025);
-        audioSpatial.play().catch(() => {});
-      }
-
-      if (spatialLoopTimer) clearInterval(spatialLoopTimer);
-      spatialLoopTimer = setInterval(() => {
-        if (audio.paused || !is8DActive) return;
-
-        // 確保兩軌時間不漂移
-        if (Math.abs(audioSpatial.currentTime - audio.currentTime) > 0.08) {
-          audioSpatial.currentTime = Math.max(0, audio.currentTime - 0.025);
-        }
-
-        // 正弦波調製兩軌相互反相的音量比重，營造空間流動感
-        spatialPhase += 0.06;
-        const panA = 0.85 + 0.15 * Math.sin(spatialPhase);
-        const panB = 0.40 + 0.35 * Math.cos(spatialPhase);
-
-        audio.volume = Math.min(1.0, Math.max(0.6, panA));
-        audioSpatial.volume = Math.min(0.8, Math.max(0.1, panB));
-      }, 50);
-    }
-
-    function toggle8DAudio() {
-      dropdownMenu.classList.remove("show");
-
-      if (!is8DActive) {
-        is8DActive = true;
-        dot8D.classList.add("active");
-        localStorage.setItem("dinomusic_8d", "true");
-        apply8DState();
-        showToast("🌀 已開啟 8D 空間環繞！佩戴耳機效果最明顯 🎧");
-      } else {
-        is8DActive = false;
-        dot8D.classList.remove("active");
-        localStorage.setItem("dinomusic_8d", "false");
-        apply8DState();
-        showToast("🎧 已切換為標準原聲立體聲");
-      }
-    }
 
     const dinoQuotes = [
       "吼～這首真抓耳！🎵",
@@ -1310,25 +1217,20 @@
         return;
       }
       if (audio.paused) {
-        audio.play().then(() => {
-          if (is8DActive) apply8DState();
-        }).catch(() => showToast("請點擊即可開始播放！"));
+        audio.play().catch(() => showToast("請點擊即可開始播放！"));
       } else {
         audio.pause();
-        audioSpatial.pause();
       }
     }
 
     audio.addEventListener("play", () => {
       playToggleBtn.innerText = "⏸";
       playerCard.classList.add("playing");
-      if (is8DActive) apply8DState();
     });
 
     audio.addEventListener("pause", () => {
       playToggleBtn.innerText = "▶";
       playerCard.classList.remove("playing");
-      audioSpatial.pause();
     });
 
     audio.addEventListener("ended", () => {
@@ -1366,14 +1268,12 @@
 
       const streamUrl = track.url || `https://api.qijieya.cn/meting/?type=url&id=${track.id}`;
       audio.src = streamUrl;
-      audioSpatial.src = streamUrl;
 
       if (shouldAutoPlay) {
         playToggleBtn.innerText = "⏳";
         audio.play().then(() => {
           playToggleBtn.innerText = "⏸";
           playerCard.classList.add("playing");
-          if (is8DActive) apply8DState();
 
           if ('mediaSession' in navigator) {
             navigator.mediaSession.metadata = new MediaMetadata({
@@ -1419,7 +1319,6 @@
       if (!isNaN(audio.duration) && audio.duration > 0) {
         const target = (progressBar.value / 100) * audio.duration;
         audio.currentTime = target;
-        audioSpatial.currentTime = target;
         curTimeText.innerText = formatTime(target);
       }
     });
@@ -1620,12 +1519,6 @@
         updateDarkModeUI(true);
       }
 
-      const saved8D = localStorage.getItem("dinomusic_8d");
-      if (saved8D === "true") {
-        is8DActive = true;
-        dot8D.classList.add("active");
-      }
-
       updateFavUI();
 
       const p = new URLSearchParams(window.location.search);
@@ -1656,7 +1549,6 @@
             audio.play().then(() => {
               playToggleBtn.innerText = "⏸";
               playerCard.classList.add("playing");
-              if (is8DActive) apply8DState();
             }).catch(() => {});
           }
           window.removeEventListener("click", autoStartOnce);
